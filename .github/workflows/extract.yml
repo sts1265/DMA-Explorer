@@ -16,7 +16,7 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run parser
         run: python parser.py
-      - - name: Commit and Push CSV
+      - name: Commit and Push CSV
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
