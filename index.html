@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMA Explorer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        :root { --primary: #2c3e50; --bg: #f4f7f6; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
+        
+        /* Sidebar */
+        #sidebar { width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; background: var(--primary); color: white; }
+        #language-select { width: 100%; padding: 10px; border: none; background: #34495e; color: white; cursor: pointer; }
+        #article-list { flex: 1; overflow-y: auto; }
+        .nav-item { padding: 12px 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; font-size: 0.9em; }
+        .nav-item:hover { background: #e8f0fe; }
+        .nav-item.active { background: #d2e3fc; border-left: 4px solid var(--primary); font-weight: bold; }
+
+        /* Main Content */
+        #content { flex: 2; padding: 40px; overflow-y: auto; background: white; border-right: 1px solid #ddd; }
+        h2 { color: var(--primary); margin-top: 0; }
+        .article-text { line-height: 1.6; font-size: 1.1em; white-space: pre-line; }
+
+        /* Recitals Panel */
+        #recitals { flex: 1.2; padding: 40px; background: var(--bg); overflow-y: auto; }
+        .recital-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #3498db; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .recital-label { font-weight: bold; color: #2980b9; margin-bottom: 5px; display: block; }
+        
+        .empty-state { color: #95a5a6; font-style: italic; text-align: center; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <h3>DMA Explorer</h3>
+            <select id="language-select" onchange="loadLanguageData()">
+                <option value="en">English (EN)</option>
+                <option value="de">Deutsch (DE)</option>
+            </select>
+        </div>
+        <div id="article-list"></div>
+    </div>
+
+    <div id="content">
+        <h2 id="art-label">Select an Article</h2>
+        <div id="art-text" class="article-text">Please select a provision from the left menu to view the legal text.</div>
+    </div>
+
+    <div id="recitals">
+        <h3>Related Recitals</h3>
+        <div id="recitals-list"><div class="empty-state">Select an article to see contextual recitals.</div></div>
+    </div>
+
+    <script>
+        let dmaData = [];
+        let masterLinks = [];
+
+        // 1. Initial Load: Get the Master Mapping
+        async function init() {
+            const response = await fetch('master_links.csv');
+            const csvText = await response.text();
+            masterLinks = Papa.parse(csvText, { header: true }).data;
+            loadLanguageData();
+        }
+
+        // 2. Load Language-Specific CSV from /data folder
+        async function loadLanguageData() {
+            const lang = document.getElementById('language-select').value;
+            const response = await fetch(`data/dma_${lang}.csv`);
+            const csvText = await response.text();
+            dmaData = Papa.parse(csvText, { header: true }).data;
+            renderSidebar();
+        }
+
+        // 3. Populate Sidebar (Filtered to Articles only)
+        function renderSidebar() {
+            const list = document.getElementById('article-list');
+            list.innerHTML = '';
+            
+            // Get unique Articles from the data
+            const articles = [...new Set(dmaData.filter(row => row.Type === 'Article Paragraph').map(row => row.ID))];
+            
+            articles.forEach(id => {
+                const item = dmaData.find(row => row.ID === id);
+                const mapping = masterLinks.find(m => m.ID === id);
+                
+                const div = document.createElement('div');
+                div.className = 'nav-item';
+                div.id = `nav-${id}`;
+                // Use Title from Master Links if available
+                const title = mapping && mapping.Title ? ` - ${mapping.Title}` : '';
+                div.innerText = `${item.Label}${title}`;
+                div.onclick = () => displayArticle(id);
+                list.appendChild(div);
+            });
+        }
+
+        // 4. Display Article Content and Related Recitals
+        function displayArticle(id) {
+            // Update UI State
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`nav-${id}`).classList.add('active');
+
+            const mapping = masterLinks.find(m => m.ID === id);
+            const items = dmaData.filter(row => row.ID === id);
+            
+            if (items.length === 0) return;
+
+            // Header: "Article 6(5): Ranking and self-preferencing"
+            const firstItem = items[0];
+            const displayHeader = mapping && mapping.Title ? `${firstItem.Label}: ${mapping.Title}` : firstItem.Label;
+            document.getElementById('art-label').innerText = displayHeader;
+
+            // Content: Aggregates all text parts (especially for block articles)
+            const combinedText = items.map(i => i.Text).join('\n\n');
+            document.getElementById('art-text').innerText = combinedText;
+
+            // Recitals: Look up the Related_Recitals column from master_links.csv
+            const recList = document.getElementById('recitals-list');
+            recList.innerHTML = '';
+
+            if (mapping && mapping.Related_Recitals) {
+                const recitalNumbers = mapping.Related_Recitals.split(',').map(n => n.trim());
+                
+                recitalNumbers.forEach(num => {
+                    const recital = dmaData.find(r => r.ID === `REC_${num}`);
+                    if (recital) {
+                        const box = document.createElement('div');
+                        box.className = 'recital-box';
+                        box.innerHTML = `<span class="recital-label">Recital (${num})</span> ${recital.Text}`;
+                        recList.appendChild(box);
+                    }
+                });
+            } else {
+                recList.innerHTML = '<div class="empty-state">No specific recitals linked for this provision.</div>';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
