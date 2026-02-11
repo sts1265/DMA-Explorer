@@ -3,39 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DMA Explorer</title>
+    <title>Digital Markets Act Explorer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        :root { --primary: #2c3e50; --bg: #f4f7f6; --text: #333; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
+        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f8f9fa; --text: #2c3e50; --border: #e1e4e8; }
+        body { font-family: 'Inter', -apple-system, system-ui, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
         
-        /* Sidebar */
-        #sidebar { width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; background: var(--primary); color: white; }
-        #language-select { width: 100%; padding: 10px; border: none; background: #34495e; color: white; cursor: pointer; }
-        #article-list { flex: 1; overflow-y: auto; }
-        .nav-item { padding: 12px 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; font-size: 0.9em; }
-        .nav-item:hover { background: #e8f0fe; }
-        .nav-item.active { background: #d2e3fc; border-left: 4px solid var(--primary); font-weight: bold; }
+        /* Navigation Sidebar */
+        #sidebar { width: 350px; background: white; border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
+        .sidebar-header { padding: 24px; background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        #language-select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #455a64; background: #34495e; color: white; margin-top: 12px; cursor: pointer; }
+        #article-list { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+        .nav-item { padding: 16px 20px; border-bottom: 1px solid #f1f1f1; cursor: pointer; transition: all 0.2s; border-left: 4px solid transparent; }
+        .nav-item:hover { background: #f0f7ff; }
+        .nav-item.active { background: #e8f0fe; border-left-color: var(--accent); color: #1a73e8; }
+        .nav-item strong { display: block; margin-bottom: 4px; font-size: 0.95rem; }
+        .nav-item small { color: #606770; font-weight: normal; font-size: 0.85rem; line-height: 1.2; display: block; }
 
-        /* Main Content */
-        #content { flex: 2; padding: 40px; overflow-y: auto; background: white; border-right: 1px solid #ddd; }
-        h2 { color: var(--primary); margin-top: 0; }
-        .article-text { line-height: 1.6; font-size: 1.1em; white-space: pre-line; }
-
-        /* Recitals Panel */
-        #recitals { flex: 1.2; padding: 40px; background: var(--bg); overflow-y: auto; }
-        .recital-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #3498db; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .recital-label { font-weight: bold; color: #2980b9; margin-bottom: 5px; display: block; }
+        /* Main Content View */
+        #main-view { flex: 2; display: flex; flex-direction: column; background: white; border-right: 1px solid var(--border); position: relative; }
+        #content { flex: 1; padding: 40px 60px; overflow-y: auto; }
+        h2#art-label { font-size: 2rem; color: var(--primary); margin-top: 0; margin-bottom: 20px; line-height: 1.2; border-bottom: 3px solid var(--bg); padding-bottom: 20px; }
+        .article-text { line-height: 1.8; font-size: 1.1rem; color: #3c4043; text-align: justify; }
         
-        .empty-state { color: #95a5a6; font-style: italic; text-align: center; margin-top: 50px; }
+        /* Bottom Resource Panel */
+        #resources-section { padding: 24px 40px; background: #fdfdfd; border-top: 1px solid var(--border); min-height: 80px; }
+        .res-title { font-size: 0.75rem; font-weight: 800; color: #9aa0a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block; }
+        .resource-tag { display: inline-flex; align-items: center; background: #e8f0fe; color: #1967d2; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; margin-right: 12px; text-decoration: none; border: 1px solid #d2e3fc; font-weight: 500; }
+        .resource-tag:hover { background: #d2e3fc; }
+
+        /* Right Panel - Recitals */
+        #recitals-panel { flex: 1.3; padding: 30px; background: #f1f3f4; overflow-y: auto; }
+        .panel-header { font-size: 0.85rem; font-weight: 700; color: #5f6368; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #dadce0; padding-bottom: 10px; }
+        .recital-box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-top: 4px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.1); line-height: 1.6; }
+        .recital-num { font-weight: bold; color: var(--accent); margin-bottom: 10px; display: block; font-size: 0.9rem; }
+        
+        .empty-state { color: #80868b; text-align: center; margin-top: 100px; font-style: italic; font-size: 0.9rem; }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #bdc1c6; }
     </style>
 </head>
 <body>
 
     <div id="sidebar">
         <div class="sidebar-header">
-            <h3>DMA Explorer</h3>
+            <h2 style="margin:0; font-size: 1.3rem; letter-spacing: -0.5px;">DMA Explorer</h2>
             <select id="language-select" onchange="loadLanguageData()">
                 <option value="en">English (EN)</option>
                 <option value="de">Deutsch (DE)</option>
@@ -44,99 +60,160 @@
         <div id="article-list"></div>
     </div>
 
-    <div id="content">
-        <h2 id="art-label">Select an Article</h2>
-        <div id="art-text" class="article-text">Please select a provision from the left menu to view the legal text.</div>
+    <div id="main-view">
+        <div id="content">
+            <h2 id="art-label">Provision Detail</h2>
+            <div id="art-text" class="article-text">Please select a provision from the sidebar to begin analysis.</div>
+        </div>
+        <div id="resources-section">
+            <span class="res-title">Additional References & Links</span>
+            <div id="resources-list"><span style="color:#bdc1c6; font-size: 0.85rem;">No external links mapped for this provision.</span></div>
+        </div>
     </div>
 
-    <div id="recitals">
-        <h3>Related Recitals</h3>
-        <div id="recitals-list"><div class="empty-state">Select an article to see contextual recitals.</div></div>
+    <div id="recitals-panel">
+        <div class="panel-header">Related Legislative Intent (Recitals)</div>
+        <div id="recitals-list"><div class="empty-state">Select an article to view supporting recitals.</div></div>
     </div>
 
     <script>
         let dmaData = [];
         let masterLinks = [];
 
-        // 1. Initial Load: Get the Master Mapping
         async function init() {
-            const response = await fetch('master_links.csv');
-            const csvText = await response.text();
-            masterLinks = Papa.parse(csvText, { header: true }).data;
-            loadLanguageData();
+            try {
+                // Fetch Master Links CSV (Sheet 4)
+                const response = await fetch('master_links.csv');
+                const csvText = await response.text();
+                masterLinks = Papa.parse(csvText, { 
+                    header: true, 
+                    skipEmptyLines: true 
+                }).data;
+                loadLanguageData();
+            } catch (e) { 
+                console.error("Critical Error: Could not load master_links.csv", e); 
+            }
         }
 
-        // 2. Load Language-Specific CSV from /data folder
         async function loadLanguageData() {
             const lang = document.getElementById('language-select').value;
-            const response = await fetch(`data/dma_${lang}.csv`);
-            const csvText = await response.text();
-            dmaData = Papa.parse(csvText, { header: true }).data;
-            renderSidebar();
+            try {
+                const response = await fetch(`data/dma_${lang}.csv`);
+                const csvText = await response.text();
+                dmaData = Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
+                renderSidebar();
+            } catch (e) {
+                console.error(`Error: Could not load data/dma_${lang}.csv`, e);
+            }
         }
 
-        // 3. Populate Sidebar (Filtered to Articles only)
+        // NATURAL SORTING: Handles Article_2, Article_5_2, Article_10 etc.
+        function getSortKey(id) {
+            const parts = id.split('_').slice(1).map(p => parseInt(p) || 0);
+            // If it's a parent article (e.g., Article_6), we push -1 so it 
+            // always ranks before its children (Article_6_1)
+            if (parts.length === 1) parts.push(-1);
+            return parts;
+        }
+
         function renderSidebar() {
             const list = document.getElementById('article-list');
             list.innerHTML = '';
             
-            // Get unique Articles from the data
-            const articles = [...new Set(dmaData.filter(row => row.Type === 'Article Paragraph').map(row => row.ID))];
+            // Extract unique IDs present in the current language data
+            let uniqueIds = [...new Set(dmaData.filter(row => row.Type === 'Article Paragraph').map(row => row.ID))];
             
-            articles.forEach(id => {
+            // Sort them numerically
+            uniqueIds.sort((a, b) => {
+                const keyA = getSortKey(a);
+                const keyB = getSortKey(b);
+                for (let i = 0; i < Math.max(keyA.length, keyB.length); i++) {
+                    const valA = keyA[i] !== undefined ? keyA[i] : -Infinity;
+                    const valB = keyB[i] !== undefined ? keyB[i] : -Infinity;
+                    if (valA !== valB) return valA - valB;
+                }
+                return 0;
+            });
+
+            uniqueIds.forEach(id => {
                 const item = dmaData.find(row => row.ID === id);
                 const mapping = masterLinks.find(m => m.ID === id);
                 
                 const div = document.createElement('div');
                 div.className = 'nav-item';
                 div.id = `nav-${id}`;
-                // Use Title from Master Links if available
-                const title = mapping && mapping.Title ? ` - ${mapping.Title}` : '';
-                div.innerText = `${item.Label}${title}`;
+                
+                const label = item.Label || id;
+                const subTitle = (mapping && mapping.Title) ? `<small>${mapping.Title}</small>` : '';
+                
+                div.innerHTML = `<strong>${label}</strong>${subTitle}`;
                 div.onclick = () => displayArticle(id);
                 list.appendChild(div);
             });
         }
 
-        // 4. Display Article Content and Related Recitals
         function displayArticle(id) {
-            // Update UI State
+            // UI Toggle
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`nav-${id}`).classList.add('active');
+            const activeNav = document.getElementById(`nav-${id}`);
+            if (activeNav) activeNav.classList.add('active');
 
             const mapping = masterLinks.find(m => m.ID === id);
             const items = dmaData.filter(row => row.ID === id);
             
             if (items.length === 0) return;
 
-            // Header: "Article 6(5): Ranking and self-preferencing"
+            // 1. Render Main Text (Aggregated)
             const firstItem = items[0];
-            const displayHeader = mapping && mapping.Title ? `${firstItem.Label}: ${mapping.Title}` : firstItem.Label;
-            document.getElementById('art-label').innerText = displayHeader;
+            const title = mapping && mapping.Title ? `: ${mapping.Title}` : '';
+            document.getElementById('art-label').innerText = `${firstItem.Label}${title}`;
+            
+            // Using .innerHTML to ensure <br> tags from the Python script render correctly
+            document.getElementById('art-text').innerHTML = items.map(i => i.Text).join('<br><br>');
 
-            // Content: Aggregates all text parts (especially for block articles)
-            const combinedText = items.map(i => i.Text).join('\n\n');
-            document.getElementById('art-text').innerText = combinedText;
+            // 2. Render External Links
+            const resList = document.getElementById('resources-list');
+            resList.innerHTML = '';
+            if (mapping && mapping.External_Links && mapping.External_Links.trim() !== "") {
+                const urls = mapping.External_Links.split(';').map(u => u.trim());
+                urls.forEach(url => {
+                    const a = document.createElement('a');
+                    a.href = url.startsWith('http') ? url : `https://${url}`;
+                    a.target = "_blank";
+                    a.className = "resource-tag";
+                    a.innerHTML = `Resource ↗`;
+                    resList.appendChild(a);
+                });
+            } else {
+                resList.innerHTML = '<span style="color:#bdc1c6; font-size: 0.85rem;">No external links mapped for this provision.</span>';
+            }
 
-            // Recitals: Look up the Related_Recitals column from master_links.csv
+            // 3. Render Recitals
             const recList = document.getElementById('recitals-list');
             recList.innerHTML = '';
-
+            
             if (mapping && mapping.Related_Recitals) {
-                const recitalNumbers = mapping.Related_Recitals.split(',').map(n => n.trim());
+                // Sanitize: removes quotes often added by Excel/CSV and splits by comma
+                const recNums = mapping.Related_Recitals.replace(/"/g, '').split(',').map(n => n.trim());
                 
-                recitalNumbers.forEach(num => {
+                recNums.forEach(num => {
                     const recital = dmaData.find(r => r.ID === `REC_${num}`);
                     if (recital) {
                         const box = document.createElement('div');
                         box.className = 'recital-box';
-                        box.innerHTML = `<span class="recital-label">Recital (${num})</span> ${recital.Text}`;
+                        box.innerHTML = `<span class="recital-num">Recital ${num}</span>${recital.Text}`;
                         recList.appendChild(box);
                     }
                 });
-            } else {
+            }
+            
+            if (recList.innerHTML === '') {
                 recList.innerHTML = '<div class="empty-state">No specific recitals linked for this provision.</div>';
             }
+            
+            // Auto-scroll content to top
+            document.getElementById('content').scrollTop = 0;
+            document.getElementById('recitals-panel').scrollTop = 0;
         }
 
         init();
