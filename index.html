@@ -8,12 +8,10 @@
     <style>
         :root { --eu-blue: #0e477d; --sidebar-bg: #f3f6f7; --font-main: "Arial", sans-serif; --border-color: #c5d1d8; }
         
-        /* Force visibility even if parent containers are weird */
+        /* Layout Structure */
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #fff; }
-        
         body { font-family: var(--font-main); display: flex; width: 100vw; }
         
-        /* Sidebar - Fixed Width */
         #sidebar { 
             width: 320px; 
             min-width: 280px; 
@@ -24,7 +22,6 @@
             height: 100vh;
         }
 
-        /* Main View - Grows to fill space */
         #main-view { 
             flex: 1; 
             display: flex; 
@@ -34,7 +31,6 @@
             background: white;
         }
 
-        /* Recitals Panel - Fixed Width */
         #recitals-panel { 
             width: 350px; 
             min-width: 300px; 
@@ -45,36 +41,61 @@
             height: 100vh;
         }
 
-        /* Navigation UI */
+        /* Sidebar Navigation */
         .sidebar-header { padding: 20px; background: var(--eu-blue); color: white; flex-shrink: 0; }
         #article-list { flex: 1; overflow-y: auto; border-top: 1px solid rgba(0,0,0,0.1); }
         
-        .nav-item { padding: 12px 18px; border-bottom: 1px solid #dbe3e8; cursor: pointer; background: #fff; line-height: 1.4; }
+        .nav-item { padding: 12px 18px; border-bottom: 1px solid #dbe3e8; cursor: pointer; background: #fff; line-height: 1.4; transition: 0.1s; }
         .nav-item:hover { background: #f8f9fa; }
-        .nav-item.active { border-left: 6px solid var(--eu-blue); background: #f0f7ff; font-weight: bold; }
+        .nav-item.active { border-left: 6px solid var(--eu-blue); background: #f0f7ff; font-weight: bold; padding-left: 12px; }
         .nav-item small { display: block; color: #666; font-size: 0.78rem; font-weight: normal; margin-top: 4px; }
         
-        .chapter-header { padding: 10px 15px; font-size: 0.7rem; font-weight: bold; background: #e1e8ed; color: #555; text-transform: uppercase; }
+        .chapter-header { padding: 10px 15px; font-size: 0.7rem; font-weight: bold; background: #e1e8ed; color: #555; text-transform: uppercase; border-bottom: 1px solid var(--border-color); }
 
         #recitals-dropdown { border-bottom: 1px solid #dbe3e8; }
-        #recitals-dropdown summary { padding: 12px 18px; font-size: 0.75rem; font-weight: bold; cursor: pointer; background: #e1e8ed; list-style: none; }
+        #recitals-dropdown summary { padding: 12px 18px; font-size: 0.75rem; font-weight: bold; cursor: pointer; background: #e1e8ed; color: #555; text-transform: uppercase; list-style: none; }
 
-        /* Content Area */
-        #content { flex: 1; padding: 40px; overflow-y: auto; }
-        .defined-term { border-bottom: 1.5px dashed var(--eu-blue); cursor: help; }
+        /* Content UI */
+        #content { flex: 1; padding: 40px; overflow-y: auto; position: relative; }
+        .defined-term { border-bottom: 1.5px dashed var(--eu-blue); cursor: help; color: inherit; }
         
-        /* Box Look for Recitals on the Right */
-        #recitals-list details { background: white; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        #recitals-list summary { padding: 12px; font-weight: bold; color: var(--eu-blue); cursor: pointer; background: #fdfdfd; }
-        #recitals-list .ref-content { padding: 15px; font-size: 0.9rem; line-height: 1.6; border-top: 1px solid #eee; }
+        #definition-box { 
+            position: fixed; display: none; z-index: 9999; width: 320px; 
+            background: white; border: 2px solid var(--eu-blue); border-radius: 8px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); padding: 18px; font-size: 0.95rem;
+            pointer-events: auto; line-height: 1.5;
+        }
 
-        #definition-box { position: fixed; display: none; z-index: 9999; width: 300px; background: white; border: 2px solid var(--eu-blue); border-radius: 8px; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        /* Referenced Recitals BOX LOOK */
+        #recitals-list details { 
+            background: white; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            margin-bottom: 12px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        #recitals-list summary { 
+            padding: 12px; 
+            font-weight: bold; 
+            color: var(--eu-blue); 
+            font-size: 0.85rem; 
+            cursor: pointer; 
+            background: #fdfdfd;
+            transition: background 0.2s;
+        }
+        #recitals-list .ref-content { 
+            padding: 15px; 
+            font-size: 0.9rem; 
+            line-height: 1.6; 
+            color: #333;
+            border-top: 1px solid #eee;
+        }
 
-        /* Mobile View - Stacked */
+        /* Responsive */
         @media (max-width: 1100px) {
             body { flex-direction: column; overflow-y: auto; height: auto; }
-            #sidebar, #main-view, #recitals-panel { width: 100% !important; height: auto; min-height: 300px; }
-            #sidebar { height: 400px; }
+            #sidebar, #main-view, #recitals-panel { width: 100% !important; height: auto; min-height: 300px; border: none; }
+            #sidebar { height: 450px; }
         }
     </style>
 </head>
@@ -83,7 +104,7 @@
     <div id="sidebar">
         <div class="sidebar-header">
             <h2 style="margin:0; font-size:1rem;">DMA Explorer</h2>
-            <select id="language-select" onchange="loadLanguageData()" style="width:100%; margin-top:10px;">
+            <select id="language-select" onchange="loadLanguageData()" style="width:100%; margin-top:10px; padding:5px;">
                 <option value="en">English (EN)</option>
                 <option value="fr">Français (FR)</option>
                 <option value="de">Deutsch (DE)</option>
@@ -94,19 +115,24 @@
 
     <div id="main-view">
         <div id="content">
-            <div id="definition-box"><h4 id="def-title" style="margin:0;"></h4><div id="def-text"></div></div>
-            <h2 id="art-label" style="color:var(--eu-blue); margin-top:0;">Select a Provision</h2>
-            <div id="art-text"></div>
+            <div id="definition-box">
+                <h4 id="def-title" style="margin:0; color:var(--eu-blue); border-bottom:1px solid #eee; padding-bottom:5px;">Term</h4>
+                <div id="def-text">...</div>
+            </div>
+            <h2 id="art-label" style="color:var(--eu-blue); border-bottom: 2px solid #eee; padding-bottom: 12px; margin-top: 0;">Select a Provision</h2>
+            <div id="art-text" style="line-height: 1.8; font-size: 1.1rem; text-align: justify;"></div>
         </div>
     </div>
 
     <div id="recitals-panel">
         <div style="padding: 15px; background: #eee; font-weight: bold; font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">RELATED REFERENCES</div>
-        <div id="recitals-list" style="padding: 20px; overflow-y: auto;"></div>
+        <div id="recitals-list" style="padding: 20px; overflow-y: auto; flex: 1;"></div>
     </div>
 
     <script>
-        let dmaData = [], masterLinks = [], definitionsMap = new Map();
+        let dmaData = [];
+        let masterLinks = [];
+        let definitionsMap = new Map();
 
         const getVal = (row, key) => {
             if (!row) return "";
@@ -114,11 +140,18 @@
             return k ? row[k].trim() : "";
         };
 
+        function resolveTitle(row, map, lang, id) {
+            const extracted = getVal(row, 'Title');
+            const csvLang = getVal(map, `Title_${lang.toUpperCase()}`);
+            if (id.includes('_') && id.split('_').length > 2) return csvLang || getVal(map, 'Title') || extracted;
+            return csvLang || extracted || getVal(map, 'Title');
+        }
+
         async function init() {
             try {
                 await Promise.all([loadDefinitions(), loadMasterLinks()]);
                 await loadLanguageData();
-            } catch (e) { console.error("Init Error:", e); }
+            } catch (e) { console.error("Initialization failed", e); }
         }
 
         async function loadDefinitions() {
@@ -147,6 +180,7 @@
 
         function renderSidebar() {
             const list = document.getElementById('article-list');
+            const lang = document.getElementById('language-select').value;
             list.innerHTML = '';
             
             const recDetails = document.createElement('details');
@@ -157,6 +191,7 @@
 
             dmaData.forEach(row => {
                 const type = getVal(row, 'Type'), id = getVal(row, 'ID'), label = getVal(row, 'Label');
+
                 if (type === 'Recital') {
                     const div = document.createElement('div');
                     div.className = 'nav-item'; div.style.paddingLeft = "30px";
@@ -169,9 +204,10 @@
                     div.innerText = label;
                     list.appendChild(div);
                 } else {
+                    const map = masterLinks.find(m => getVal(m, 'ID') === id);
                     const div = document.createElement('div');
                     div.className = 'nav-item'; div.id = 'nav-' + id;
-                    div.innerHTML = `<strong>${label}</strong>`;
+                    div.innerHTML = `<strong>${label}</strong><small>${resolveTitle(row, map, lang, id)}</small>`;
                     div.onclick = () => displayContent(id);
                     list.appendChild(div);
                 }
@@ -179,14 +215,18 @@
         }
 
         function displayContent(id) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('nav-'+id)?.classList.add('active');
+
+            const lang = document.getElementById('language-select').value;
             const row = dmaData.find(r => getVal(r, 'ID') === id);
+            const map = masterLinks.find(m => getVal(m, 'ID') === id);
             if (!row) return;
 
-            document.getElementById('art-label').innerText = getVal(row, 'Label');
+            document.getElementById('art-label').innerText = `${getVal(row, 'Label')}: ${resolveTitle(row, map, lang, id)}`;
+            
             let textHtml = getVal(row, 'Text').replace(/\xa0/g, ' ');
-
-            // Apply Definitions
-            if (definitionsMap.size > 0) {
+            if (!id.startsWith('Article_2') && definitionsMap.size > 0) {
                 const sortedTerms = Array.from(definitionsMap.keys()).sort((a,b) => b.length - a.length);
                 sortedTerms.forEach(term => {
                     const regex = new RegExp(`\\b(${term}s?)\\b(?![^<]*>|[^<>]*<\/span>)`, 'gi');
@@ -195,9 +235,8 @@
             }
             document.getElementById('art-text').innerHTML = textHtml;
 
-            // Recitals Panel (Boxes)
+            // Related Recitals (Box Layout)
             const sideList = document.getElementById('recitals-list'); sideList.innerHTML = '';
-            const map = masterLinks.find(m => getVal(m, 'ID') === id);
             if (map) {
                 const relStr = getVal(map, 'Related_Recitals');
                 if (relStr) {
