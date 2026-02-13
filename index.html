@@ -2,44 +2,191 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DMA Explorer</title>
+    <title>DMA Legal Explorer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        :root { --primary: #1a252f; --accent: #2980b9; --bg: #fcfcfc; --font-serif: 'Palatino Linotype', 'Palatino', 'Georgia', serif; }
-        body { font-family: var(--font-serif); margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
+        :root { 
+            --primary: #1a252f; 
+            --accent: #2980b9; 
+            --bg: #fcfcfc; 
+            --text-dark: #1a1a1a;
+            /* Authentic legal font stack */
+            --font-serif: 'Palatino Linotype', 'Palatino', 'Georgia', serif; 
+            --font-sans: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body { 
+            font-family: var(--font-serif); 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            background: var(--bg); 
+            overflow: hidden; 
+        }
         
-        /* SIDEBAR (Narrower) */
-        #sidebar { width: 280px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 15px; background: var(--primary); color: white; }
-        #article-list { flex: 1; overflow-y: auto; font-family: sans-serif; font-size: 0.85rem; }
+        /* SIDEBAR: Narrowed for more content space */
+        #sidebar { 
+            width: 280px; 
+            background: #fff; 
+            border-right: 1px solid #ddd; 
+            display: flex; 
+            flex-direction: column; 
+            flex-shrink: 0;
+        }
+
+        .sidebar-header { 
+            padding: 15px; 
+            background: var(--primary); 
+            color: white; 
+        }
+
+        #article-list { 
+            flex: 1; 
+            overflow-y: auto; 
+            font-family: var(--font-sans); 
+            font-size: 0.85rem; 
+        }
         
-        .section-header { padding: 8px 15px; background: #f8f9fa; font-weight: bold; font-size: 0.65rem; color: #888; text-transform: uppercase; border-bottom: 1px solid #eee; }
-        .nav-item { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; border-left: 3px solid transparent; }
-        .nav-item:hover { background: #f5f9ff; }
-        .nav-item.active { background: #ebf5ff; border-left-color: var(--accent); font-weight: bold; }
-        .nav-item small { color: #666; font-size: 0.75rem; display: block; font-weight: normal; margin-top: 2px; }
+        .section-header { 
+            padding: 10px 15px; 
+            background: #f1f4f6; 
+            font-weight: bold; 
+            font-size: 0.65rem; 
+            color: #7f8c8d; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            border-bottom: 1px solid #e0e0e0;
+        }
 
-        /* MAIN VIEW */
-        #main-view { flex: 4; display: flex; flex-direction: column; background: white; border-right: 1px solid #ddd; }
-        #content { flex: 1; padding: 40px 60px; overflow-y: auto; }
-        h2#art-label { font-size: 1.6rem; color: #000; border-bottom: 2px solid var(--accent); padding-bottom: 15px; margin-bottom: 25px; }
-        .article-text { line-height: 1.8; font-size: 1.1rem; color: #1a1a1a; text-align: justify; }
+        .nav-item { 
+            padding: 12px 15px; 
+            border-bottom: 1px solid #f0f0f0; 
+            cursor: pointer; 
+            border-left: 4px solid transparent; 
+            transition: all 0.2s;
+        }
 
-        /* RECITALS (Foldable) */
-        #recitals-panel { flex: 1.5; padding: 20px; background: #f4f6f8; overflow-y: auto; }
-        details { background: white; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 10px; padding: 10px; }
-        summary { cursor: pointer; font-weight: bold; color: var(--accent); font-size: 0.85rem; font-family: sans-serif; outline: none; }
-        .recital-content { padding-top: 10px; font-size: 0.9rem; line-height: 1.5; color: #444; }
+        .nav-item:hover { background: #f5faff; }
+        
+        .nav-item.active { 
+            background: #ebf5ff; 
+            border-left-color: var(--accent); 
+        }
 
-        /* DIAGNOSTIC CONSOLE */
-        #diag { padding: 10px; background: #333; color: #0f0; font-family: monospace; font-size: 0.7rem; max-height: 100px; overflow-y: auto; }
+        .nav-item strong { 
+            display: block; 
+            color: var(--text-dark); 
+            margin-bottom: 3px; 
+        }
+
+        .nav-item small { 
+            color: #7f8c8d; 
+            font-size: 0.78rem; 
+            line-height: 1.2; 
+            display: block; 
+        }
+
+        /* MAIN VIEW: Maximized space */
+        #main-view { 
+            flex: 4; 
+            display: flex; 
+            flex-direction: column; 
+            background: white; 
+            border-right: 1px solid #ddd; 
+        }
+
+        #content { 
+            flex: 1; 
+            padding: 40px 60px; 
+            overflow-y: auto; 
+        }
+
+        h2#art-label { 
+            font-size: 1.7rem; 
+            color: #000; 
+            border-bottom: 2px solid var(--accent); 
+            padding-bottom: 15px; 
+            margin-bottom: 30px; 
+            font-weight: bold;
+        }
+
+        .article-text { 
+            line-height: 1.8; 
+            font-size: 1.15rem; 
+            color: var(--text-dark); 
+            text-align: justify; 
+        }
+
+        /* RESOURCE SECTION */
+        #resources-section { 
+            padding: 20px 60px; 
+            border-top: 1px solid #eee; 
+            background: #fafafa;
+        }
+
+        /* RECITALS PANEL: Foldable details */
+        #recitals-panel { 
+            flex: 1.4; 
+            padding: 20px; 
+            background: #f4f7f9; 
+            overflow-y: auto; 
+            border-left: 1px solid #eee;
+        }
+
+        details { 
+            background: white; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 6px; 
+            margin-bottom: 12px; 
+            padding: 12px; 
+            transition: box-shadow 0.2s;
+        }
+
+        details:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+        summary { 
+            cursor: pointer; 
+            font-weight: bold; 
+            color: var(--accent); 
+            font-size: 0.85rem; 
+            font-family: var(--font-sans); 
+            outline: none; 
+            list-style: none;
+        }
+
+        summary::-webkit-details-marker { display: none; }
+        summary::before { content: "▶ "; font-size: 0.7rem; margin-right: 5px; }
+        details[open] summary::before { content: "▼ "; }
+
+        details[open] { border-left: 4px solid var(--accent); }
+
+        .recital-content { 
+            padding-top: 10px; 
+            font-size: 0.92rem; 
+            line-height: 1.6; 
+            color: #444; 
+            border-top: 1px solid #f0f0f0;
+            margin-top: 8px;
+        }
+
+        /* DIAGNOSTIC CONSOLE (Bottom of Sidebar) */
+        #diag { 
+            padding: 8px 12px; 
+            background: #2c3e50; 
+            color: #2ecc71; 
+            font-family: 'Courier New', monospace; 
+            font-size: 0.65rem; 
+            max-height: 80px; 
+            overflow-y: auto; 
+            border-top: 1px solid #000;
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
         <div class="sidebar-header">
-            <h3 style="margin:0; font-family: sans-serif;">DMA Explorer</h3>
-            <select id="language-select" onchange="loadLanguageData()" style="width:100%; margin-top:10px; padding:6px; border-radius:4px;">
+            <h3 style="margin:0; font-family: var(--font-sans); letter-spacing: -0.5px;">DMA Explorer</h3>
+            <select id="language-select" onchange="loadLanguageData()" style="width:100%; margin-top:12px; padding:8px; border:none; border-radius:4px; cursor:pointer; font-weight: 500;">
                 <option value="en">English (EN)</option>
                 <option value="fr">Français (FR)</option>
                 <option value="de">Deutsch (DE)</option>
@@ -50,15 +197,18 @@
     </div>
 
     <div id="main-view">
-        <div id="content"><h2 id="art-label">Select a Provision</h2><div id="art-text" class="article-text"></div></div>
-        <div id="resources-section" style="padding:20px 60px; border-top:1px solid #eee;">
-            <small style="font-family:sans-serif; color:#aaa; font-weight:bold;">EXTERNAL LINKS</small>
-            <div id="resources-list" style="margin-top:8px;"></div>
+        <div id="content">
+            <h2 id="art-label">Select a Provision</h2>
+            <div id="art-text" class="article-text">Please select an article from the left navigation panel to begin exploring the Digital Markets Act.</div>
+        </div>
+        <div id="resources-section">
+            <small style="font-family: var(--font-sans); color:#95a5a6; font-weight:bold; letter-spacing:1px; text-transform: uppercase;">External Resources</small>
+            <div id="resources-list" style="margin-top:10px;"></div>
         </div>
     </div>
 
     <div id="recitals-panel">
-        <h4 style="margin-top:0; font-family:sans-serif; color:#888; font-size:0.75rem; text-transform:uppercase;">Related Recitals</h4>
+        <h4 style="margin-top:0; font-family: var(--font-sans); color:#7f8c8d; font-size:0.75rem; letter-spacing:1px; text-transform:uppercase; margin-bottom: 20px;">Related Recitals</h4>
         <div id="recitals-list"></div>
     </div>
 
@@ -66,25 +216,33 @@
         let dmaData = [];
         let masterLinks = [];
 
-        function log(msg) { document.getElementById('diag').innerHTML += `<br>> ${msg}`; }
+        function log(msg) { 
+            const d = document.getElementById('diag');
+            d.innerHTML += `<div>> ${msg}</div>`; 
+            d.scrollTop = d.scrollHeight;
+        }
 
+        // Helper to handle case-insensitive and whitespace-trimmed keys
         const getVal = (obj, key) => {
             if (!obj) return "";
-            const k = Object.keys(obj).find(x => x.toLowerCase() === key.toLowerCase());
-            return k ? obj[k] : "";
+            const foundKey = Object.keys(obj).find(x => x.trim().toLowerCase() === key.toLowerCase());
+            return foundKey ? obj[foundKey].trim() : "";
         };
 
         async function init() {
             try {
                 log("Fetching master_links.csv...");
                 const resp = await fetch('master_links.csv');
-                if(!resp.ok) throw new Error("File not found");
+                if(!resp.ok) throw new Error("master_links.csv not found on server.");
                 const text = await resp.text();
-                // Auto-detect delimiter but favor semicolon
-                masterLinks = Papa.parse(text, { header: true, skipEmptyLines: true }).data;
+                
+                // PapaParse handles delimiters (comma or semicolon) automatically
+                const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+                masterLinks = parsed.data;
                 log(`Master mapping loaded: ${masterLinks.length} items.`);
+                
                 loadLanguageData();
-            } catch (e) { log("ERROR: " + e.message); }
+            } catch (e) { log("CRITICAL ERROR: " + e.message); }
         }
 
         async function loadLanguageData() {
@@ -92,38 +250,65 @@
             log(`Loading data/dma_${lang}.csv...`);
             try {
                 const resp = await fetch(`data/dma_${lang}.csv`);
-                if(!resp.ok) throw new Error("Data file missing");
+                if(!resp.ok) throw new Error(`data/dma_${lang}.csv not found.`);
                 const text = await resp.text();
-                dmaData = Papa.parse(text, { header: true, skipEmptyLines: true }).data;
-                log(`Data loaded: ${dmaData.length} rows.`);
+                
+                const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+                dmaData = parsed.data;
+                log(`Data loaded: ${dmaData.length} total rows.`);
+                
                 renderSidebar();
-            } catch (e) { log("ERROR: " + e.message); }
+            } catch (e) { 
+                log("ERROR: " + e.message); 
+                document.getElementById('article-list').innerHTML = `<div style="padding:20px; color:red;">Error loading ${lang} file. Ensure it exists in the /data folder.</div>`;
+            }
         }
 
         function renderSidebar() {
             const list = document.getElementById('article-list');
             const lang = document.getElementById('language-select').value;
-            list.innerHTML = '<div class="section-header">Articles</div>';
+            list.innerHTML = '<div class="section-header">Articles & Paragraphs</div>';
             
-            const articles = dmaData.filter(r => getVal(r, 'Type').includes('Article'));
-            log(`Found ${articles.length} Articles.`);
+            // Filter out Recitals to only show Articles/Annexes in the sidebar
+            const provisions = dmaData.filter(r => {
+                const type = getVal(r, 'Type').toLowerCase();
+                return type.includes('article') || type.includes('annex');
+            });
 
-            articles.forEach(row => {
+            log(`Filtering: ${provisions.length} provision rows found.`);
+
+            if (provisions.length === 0) {
+                log("WARNING: 0 articles found. Check if the parser Trigger worked.");
+                list.innerHTML += '<div style="padding:15px; color:#e67e22;">No articles found. Check parser logs.</div>';
+                return;
+            }
+
+            provisions.forEach(row => {
                 const id = getVal(row, 'ID');
                 const map = masterLinks.find(m => getVal(m, 'ID') === id);
                 
+                // MULTI-LANGUAGE TITLE LOGIC:
+                // 1. Title parsed directly from the language-specific HTML
                 const title_parsed = getVal(row, 'Title');
-                const title_map = getVal(map, `Title_${lang.toUpperCase()}`) || getVal(map, 'Title');
+                // 2. Specific translation from master_links (Title_FR, Title_DE)
+                const langKey = `Title_${lang.toUpperCase()}`;
+                const title_map_lang = getVal(map, langKey);
+                // 3. Fallback to English Title from master_links
+                const title_map_en = getVal(map, 'Title');
+                
+                const displayTitle = title_parsed || title_map_lang || title_map_en || "General Provision";
                 
                 const div = document.createElement('div');
-                div.className = 'nav-item'; div.id = `nav-${id}`;
-                div.innerHTML = `<strong>${getVal(row, 'Label')}</strong><small>${title_parsed || title_map}</small>`;
+                div.className = 'nav-item'; 
+                div.id = `nav-${id}`;
+                div.innerHTML = `<strong>${getVal(row, 'Label')}</strong><small>${displayTitle}</small>`;
                 div.onclick = () => displayArticle(id);
                 list.appendChild(div);
             });
         }
 
         function displayArticle(id) {
+            // Update active state in UI
             document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
             document.getElementById(`nav-${id}`)?.classList.add('active');
 
@@ -131,30 +316,52 @@
             const row = dmaData.find(r => getVal(r, 'ID') === id);
             const map = masterLinks.find(m => getVal(m, 'ID') === id);
 
-            const title = getVal(row, 'Title') || getVal(map, `Title_${lang.toUpperCase()}`) || getVal(map, 'Title');
-            document.getElementById('art-label').innerHTML = `<b>${getVal(row, 'Label')}: ${title}</b>`;
+            if (!row) return;
+
+            // Resolve Title for main view
+            const title_parsed = getVal(row, 'Title');
+            const title_map = getVal(map, `Title_${lang.toUpperCase()}`) || getVal(map, 'Title');
+            const fullTitle = title_parsed || title_map || "";
+
+            document.getElementById('art-label').innerText = `${getVal(row, 'Label')}: ${fullTitle}`;
             document.getElementById('art-text').innerHTML = getVal(row, 'Text');
 
-            // Recitals
+            // RECITALS: Use foldable <details> boxes
             const recList = document.getElementById('recitals-list');
             recList.innerHTML = '';
-            const rel = getVal(map, 'Related_Recitals');
-            if (rel) {
-                rel.split(',').forEach(n => {
-                    const rec = dmaData.find(r => getVal(r, 'ID') === `REC_${n.trim()}`);
-                    if (rec) {
+            
+            const relatedStr = getVal(map, 'Related_Recitals');
+            if (relatedStr) {
+                const recitalIds = relatedStr.split(',').map(s => s.trim());
+                recitalIds.forEach(num => {
+                    const recitalData = dmaData.find(r => getVal(r, 'ID') === `REC_${num}`);
+                    if (recitalData) {
                         const det = document.createElement('details');
-                        det.innerHTML = `<summary>Recital ${n.trim()}</summary><div class="recital-content">${getVal(rec, 'Text')}</div>`;
+                        det.innerHTML = `
+                            <summary>Recital ${num}</summary>
+                            <div class="recital-content">${getVal(recitalData, 'Text')}</div>
+                        `;
                         recList.appendChild(det);
                     }
                 });
+            } else {
+                recList.innerHTML = '<div style="color:#bdc3c7; font-size:0.8rem;">No recitals mapped to this provision.</div>';
             }
 
-            // Links
-            const link = getVal(map, 'External_Links');
-            const name = getVal(map, 'Link_Name') || "View Reference ↗";
-            document.getElementById('resources-list').innerHTML = link ? `<a href="${link}" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:bold;">${name}</a>` : '--';
+            // EXTERNAL LINKS: Use Link_Name column
+            const resList = document.getElementById('resources-list');
+            const linkUrl = getVal(map, 'External_Links');
+            const linkName = getVal(map, 'Link_Name') || "View External Reference ↗";
+            
+            resList.innerHTML = linkUrl 
+                ? `<a href="${linkUrl}" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:bold; font-family: var(--font-sans); font-size: 0.9rem;">${linkName}</a>` 
+                : '<span style="color:#bdc3c7; font-style:italic; font-size: 0.9rem;">No external links available.</span>';
+            
+            // Scroll content to top
+            document.getElementById('content').scrollTop = 0;
         }
+
+        // Boot
         init();
     </script>
 </body>
