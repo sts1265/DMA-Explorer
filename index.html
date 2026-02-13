@@ -105,7 +105,6 @@
             return k ? row[k].trim() : "";
         };
 
-        // Resizer Setup
         function initResizers() {
             const leftR = document.getElementById('resizer-left'), rightR = document.getElementById('resizer-right');
             const sidebar = document.getElementById('sidebar'), panel = document.getElementById('recitals-panel');
@@ -122,7 +121,6 @@
 
         async function init() {
             initResizers();
-            // Load Definitions and Master Links
             await Promise.all([loadDefinitions(), loadMasterLinks()]);
             loadLanguageData();
         }
@@ -131,11 +129,19 @@
             try {
                 const resp = await fetch('definitions.csv');
                 const text = await resp.text();
-                const data = Papa.parse(text, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
+                // Normalize non-breaking spaces commonly found in legal text
+                const cleanText = text.replace(/\xa0/g, ' ');
+                const data = Papa.parse(cleanText, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
+                
                 data.forEach(row => {
-                    if (row.notion) definitionsMap.set(row.notion.trim().toLowerCase(), row.exact_definition.trim());
+                    const term = getVal(row, 'notion');
+                    const definition = getVal(row, 'exact definition');
+                    if (term && definition) {
+                        definitionsMap.set(term.toLowerCase(), definition);
+                    }
                 });
-            } catch (e) { console.warn("definitions.csv not found or invalid."); }
+                console.log("Definitions loaded:", definitionsMap.size);
+            } catch (e) { console.error("Error loading definitions.csv:", e); }
         }
 
         async function loadMasterLinks() {
@@ -156,12 +162,9 @@
             const extracted = getVal(row, 'Title');
             const csvLang = getVal(map, `Title_${lang.toUpperCase()}`);
             const csvUnofficial = getVal(map, 'Title');
-            
-            // For sub-paragraphs (Art. 5(1)), CSV is the primary source of truth for the title
             if (id.includes('_') && id.split('_').length > 2) {
                 return csvLang || csvUnofficial || extracted;
             }
-            // For main Articles, use official HTML title if CSV translation is missing
             return csvLang || extracted || csvUnofficial;
         }
 
@@ -197,19 +200,17 @@
             
             document.getElementById('art-label').innerText = `${getVal(row, 'Label')}: ${resolveTitle(row, map, lang, id)}`;
             
-            // Definition Highlighting Logic
-            let textHtml = getVal(row, 'Text');
+            let textHtml = getVal(row, 'Text').replace(/\xa0/g, ' '); // Normalize text for matching
+            
             if (!id.startsWith('Article_2') && definitionsMap.size > 0) {
                 const sortedTerms = Array.from(definitionsMap.keys()).sort((a,b) => b.length - a.length);
                 sortedTerms.forEach(term => {
-                    // Match word boundaries, handle optional plurals, ignore existing span tags
                     const regex = new RegExp(`\\b(${term}s?)\\b(?![^<]*>|[^<>]*<\/span>)`, 'gi');
                     textHtml = textHtml.replace(regex, `<span class="defined-term" onclick="showDef(event, '${term}')">$1</span>`);
                 });
             }
             document.getElementById('art-text').innerHTML = textHtml;
 
-            // Related References (Recitals / Annex)
             const sideList = document.getElementById('recitals-list');
             sideList.innerHTML = '';
             const relStr = getVal(map, 'Related_Recitals');
@@ -226,7 +227,6 @@
                 });
             }
 
-            // External Links
             const container = document.getElementById('links-container');
             container.innerHTML = '';
             const linkData = getVal(map, 'External_Links');
@@ -251,23 +251,15 @@
 
             document.getElementById('def-title').innerText = termKey;
             document.getElementById('def-text').innerText = def;
-            
             box.style.display = 'block';
             
-            // Viewport safety: prevent box from going off-screen
-            let x = event.clientX + 15;
-            let y = event.clientY - 20;
-            
+            let x = event.clientX + 15, y = event.clientY - 20;
             if (x + 340 > window.innerWidth) x = window.innerWidth - 350;
             if (y + 250 > window.innerHeight) y = window.innerHeight - 270;
-
-            box.style.left = x + 'px';
-            box.style.top = y + 'px';
+            box.style.left = x + 'px'; box.style.top = y + 'px';
         }
 
-        // Close definition box when clicking elsewhere
         window.onclick = () => { document.getElementById('definition-box').style.display = 'none'; };
-        
         init();
     </script>
 </body>
