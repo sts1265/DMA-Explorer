@@ -17,55 +17,52 @@
         .resizer { width: 6px; cursor: col-resize; background: #eee; transition: 0.2s; z-index: 10; }
         .resizer:hover { background: var(--eu-blue); opacity: 0.5; }
 
-        /* Content UI */
+        /* Sidebar UI */
         .sidebar-header { padding: 20px; background: var(--eu-blue); color: white; }
         #article-list { flex: 1; overflow-y: auto; }
-        #content { flex: 1; padding: 40px 60px; overflow-y: auto; position: relative; }
         
-        /* Floating Definition Box */
+        /* Recitals Sidebar Section */
+        #recitals-nav-container { border-bottom: 1px solid #dbe3e8; background: #fff; }
+        #recitals-nav-container summary { 
+            padding: 12px 18px; font-size: 0.75rem; font-weight: bold; cursor: pointer; 
+            background: #e1e8ed; color: #555; text-transform: uppercase; list-style: none;
+        }
+        #recitals-nav-container summary::-webkit-details-marker { display: none; }
+        #recitals-nav-container summary::before { content: "▶ "; font-size: 0.6rem; margin-right: 5px; }
+        #recitals-nav-container[open] summary::before { content: "▼ "; }
+
+        /* Navigation Items */
+        .nav-item { padding: 12px 18px; border-bottom: 1px solid #dbe3e8; cursor: pointer; background: #fff; line-height: 1.4; transition: 0.2s; }
+        .nav-item:hover { background: #f8f9fa; }
+        .nav-item.active { border-left: 6px solid var(--eu-blue); background: #f0f7ff; font-weight: bold; padding-left: 12px; }
+        .nav-item small { display: block; color: #666; font-size: 0.78rem; font-weight: normal; margin-top: 4px; }
+        .chapter-header { padding: 10px 15px; font-size: 0.7rem; font-weight: bold; background: #e1e8ed; color: #555; text-transform: uppercase; border-bottom: 1px solid #c5d1d8; }
+
+        /* Content UI */
+        #content { flex: 1; padding: 40px 60px; overflow-y: auto; position: relative; }
+        .defined-term { border-bottom: 1.5px dashed var(--eu-blue); cursor: help; color: inherit; }
+        
         #definition-box { 
             position: fixed; display: none; z-index: 9999; width: 320px; 
             background: white; border: 2px solid var(--eu-blue); border-radius: 8px; 
             box-shadow: 0 10px 25px rgba(0,0,0,0.3); padding: 18px; font-size: 0.95rem;
             pointer-events: auto; line-height: 1.5;
         }
-        #definition-box h4 { margin: 0 0 10px 0; color: var(--eu-blue); border-bottom: 1px solid #eee; padding-bottom: 5px; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; }
-        .defined-term { border-bottom: 1.5px dashed var(--eu-blue); cursor: help; color: inherit; transition: background 0.2s; }
-        .defined-term:hover { background: rgba(14, 71, 125, 0.08); }
 
-        /* Navigation Items */
-        .nav-item { padding: 12px 18px; border-bottom: 1px solid #dbe3e8; cursor: pointer; background: #fff; line-height: 1.4; }
-        .nav-item:hover { background: #f8f9fa; }
-        .nav-item.active { border-left: 6px solid var(--eu-blue); background: #f0f7ff; font-weight: bold; padding-left: 12px; }
-        .nav-item small { display: block; color: #666; font-size: 0.78rem; font-weight: normal; margin-top: 4px; }
-        
-        .chapter-header { padding: 10px 15px; font-size: 0.7rem; font-weight: bold; background: #e1e8ed; color: #555; text-transform: uppercase; border-bottom: 1px solid #c5d1d8; }
-
-        /* External Links Section */
+        /* Links & References */
         #external-links-area { padding: 15px 40px; background: #f4f4f4; border-top: 1px solid #ddd; }
-        .links-header { font-size: 0.75rem; font-weight: bold; color: #666; text-transform: uppercase; margin-bottom: 10px; }
-        .ext-link { color: var(--eu-blue); text-decoration: none; font-weight: bold; font-size: 0.8rem; border: 1px solid var(--eu-blue); padding: 6px 12px; border-radius: 4px; background: white; display: inline-block; margin: 5px 10px 5px 0; transition: 0.2s; }
-        .ext-link:hover { background: var(--eu-blue); color: white; }
-        .ext-link::after { content: " ↗"; font-size: 0.7rem; }
-
-        /* Recitals / References Panel */
+        .ext-link { color: var(--eu-blue); text-decoration: none; font-weight: bold; font-size: 0.8rem; border: 1px solid var(--eu-blue); padding: 6px 12px; border-radius: 4px; background: white; display: inline-block; margin: 5px 10px 5px 0; }
         details { background: white; border: 1px solid #ddd; margin-bottom: 10px; padding: 12px; border-radius: 4px; }
-        summary { cursor: pointer; font-weight: bold; color: var(--eu-blue); font-size: 0.85rem; outline: none; }
-        .ref-content { font-size: 0.88rem; padding-top: 10px; color: #444; line-height: 1.5; }
+        summary { cursor: pointer; font-weight: bold; color: var(--eu-blue); font-size: 0.85rem; }
 
-        /* Responsive Breakpoints */
+        /* Mobile Breakpoints */
         @media (max-width: 1100px) {
             body { flex-direction: column; overflow-y: auto; height: auto; }
             #sidebar, #main-view, #recitals-panel { width: 100% !important; height: auto; min-width: 100%; border: none; }
-            #sidebar { max-height: 400px; } 
-            #recitals-panel { border-top: 1px solid #ddd; }
+            #sidebar { max-height: 500px; }
             .resizer { display: none; }
             #content { padding: 20px; }
-            
-            #definition-box { 
-                width: 85% !important; left: 50% !important; top: 50% !important; 
-                transform: translate(-50%, -50%); position: fixed;
-            }
+            #definition-box { width: 85% !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%); }
         }
     </style>
 </head>
@@ -88,17 +85,15 @@
     <div id="main-view">
         <div id="content">
             <div id="definition-box">
-                <h4 id="def-title">Term</h4>
+                <h4 id="def-title" style="margin:0; color:var(--eu-blue); border-bottom:1px solid #eee; padding-bottom:5px;">Term</h4>
                 <div id="def-text">...</div>
                 <button onclick="hideDef()" style="margin-top:10px; width:100%; display:none; padding:8px;" id="mobile-close-btn">Close</button>
             </div>
-            
             <h2 id="art-label" style="color:var(--eu-blue); border-bottom: 2px solid #eee; padding-bottom: 12px; margin-top: 0;">Select a Provision</h2>
             <div id="art-text" style="line-height: 1.8; font-size: 1.1rem; color: #222; text-align: justify;"></div>
         </div>
-
         <div id="external-links-area">
-            <div class="links-header">External References 🌐</div>
+            <div style="font-size:0.75rem; font-weight:bold; color:#666; margin-bottom:10px; text-transform:uppercase;">External References 🌐</div>
             <div id="links-container"></div>
         </div>
     </div>
@@ -106,7 +101,7 @@
     <div class="resizer" id="resizer-right"></div>
 
     <div id="recitals-panel">
-        <div style="padding: 15px; background: #eee; font-weight: bold; font-size: 0.75rem; color: #555; border-bottom: 1px solid #ddd; letter-spacing: 0.5px;">RELATED REFERENCES</div>
+        <div style="padding: 15px; background: #eee; font-weight: bold; font-size: 0.75rem; color: #555; border-bottom: 1px solid #ddd;">RELATED REFERENCES</div>
         <div id="recitals-list" style="padding: 20px; overflow-y: auto; flex: 1;"></div>
     </div>
 
@@ -124,153 +119,5 @@
         function initResizers() {
             const leftR = document.getElementById('resizer-left'), rightR = document.getElementById('resizer-right');
             const sidebar = document.getElementById('sidebar'), panel = document.getElementById('recitals-panel');
-            
             leftR.onmousedown = (e) => {
-                document.onmousemove = (e) => { sidebar.style.width = e.clientX + 'px'; };
-                document.onmouseup = () => document.onmousemove = null;
-            };
-            rightR.onmousedown = (e) => {
-                document.onmousemove = (e) => { panel.style.width = (window.innerWidth - e.clientX) + 'px'; };
-                document.onmouseup = () => document.onmousemove = null;
-            };
-        }
-
-        async function init() {
-            initResizers();
-            await Promise.all([loadDefinitions(), loadMasterLinks()]);
-            loadLanguageData();
-        }
-
-        async function loadDefinitions() {
-            try {
-                const resp = await fetch('definitions.csv');
-                const text = await resp.text();
-                const cleanText = text.replace(/\xa0/g, ' '); // Normalize spaces
-                const data = Papa.parse(cleanText, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
-                
-                data.forEach(row => {
-                    const term = getVal(row, 'notion');
-                    const definition = getVal(row, 'exact definition');
-                    if (term && definition) definitionsMap.set(term.toLowerCase(), definition);
-                });
-            } catch (e) { console.error("Definitions load failed."); }
-        }
-
-        async function loadMasterLinks() {
-            const resp = await fetch('master_links.csv');
-            const text = await resp.text();
-            masterLinks = Papa.parse(text, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
-        }
-
-        async function loadLanguageData() {
-            const lang = document.getElementById('language-select').value;
-            const resp = await fetch(`data/dma_${lang}.csv`);
-            const text = await resp.text();
-            dmaData = Papa.parse(text, { header: true, skipEmptyLines: true }).data;
-            renderSidebar();
-        }
-
-        function resolveTitle(row, map, lang, id) {
-            const extracted = getVal(row, 'Title');
-            const csvLang = getVal(map, `Title_${lang.toUpperCase()}`);
-            if (id.includes('_') && id.split('_').length > 2) return csvLang || getVal(map, 'Title') || extracted;
-            return csvLang || extracted || getVal(map, 'Title');
-        }
-
-        function renderSidebar() {
-            const list = document.getElementById('article-list'), lang = document.getElementById('language-select').value;
-            list.innerHTML = '';
-            dmaData.forEach(row => {
-                const type = getVal(row, 'Type');
-                if (type === 'Chapter') {
-                    const div = document.createElement('div');
-                    div.className = 'chapter-header';
-                    div.innerText = getVal(row, 'Label');
-                    list.appendChild(div);
-                } else if (type !== 'Recital') {
-                    const id = getVal(row, 'ID'), map = masterLinks.find(m => getVal(m, 'ID') === id);
-                    const div = document.createElement('div');
-                    div.className = 'nav-item'; div.id = 'nav-' + id;
-                    div.innerHTML = `<strong>${getVal(row, 'Label')}</strong><small>${resolveTitle(row, map, lang, id)}</small>`;
-                    div.onclick = () => { displayContent(id); if(window.innerWidth < 1100) document.getElementById('main-view').scrollIntoView(); };
-                    list.appendChild(div);
-                }
-            });
-        }
-
-        function displayContent(id) {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('nav-'+id)?.classList.add('active');
-            
-            const lang = document.getElementById('language-select').value, row = dmaData.find(r => getVal(r, 'ID') === id), map = masterLinks.find(m => getVal(m, 'ID') === id);
-            
-            document.getElementById('art-label').innerText = `${getVal(row, 'Label')}: ${resolveTitle(row, map, lang, id)}`;
-            
-            let textHtml = getVal(row, 'Text').replace(/\xa0/g, ' ');
-            if (!id.startsWith('Article_2') && definitionsMap.size > 0) {
-                const sortedTerms = Array.from(definitionsMap.keys()).sort((a,b) => b.length - a.length);
-                sortedTerms.forEach(term => {
-                    const regex = new RegExp(`\\b(${term}s?)\\b(?![^<]*>|[^<>]*<\/span>)`, 'gi');
-                    textHtml = textHtml.replace(regex, `<span class="defined-term" onclick="showDef(event, '${term}')">$1</span>`);
-                });
-            }
-            document.getElementById('art-text').innerHTML = textHtml;
-
-            // Recitals Panel Logic
-            const sideList = document.getElementById('recitals-list'); sideList.innerHTML = '';
-            const relStr = getVal(map, 'Related_Recitals');
-            if (relStr) {
-                relStr.split(',').map(s => s.trim()).forEach(ref => {
-                    const isAnnex = ref.toLowerCase() === 'annex';
-                    const searchId = isAnnex ? "ANNEX_MAIN" : `REC_${ref}`;
-                    const refData = dmaData.find(x => getVal(x, 'ID') === searchId);
-                    if (refData) {
-                        const d = document.createElement('details');
-                        const label = isAnnex ? 'Annex' : `Recital ${ref}`;
-                        d.innerHTML = `<summary>${label}</summary><div class="ref-content">${getVal(refData, 'Text')}</div>`;
-                        sideList.appendChild(d);
-                    }
-                });
-            }
-
-            // Links
-            const container = document.getElementById('links-container'); container.innerHTML = '';
-            const linkData = getVal(map, 'External_Links');
-            if (linkData) {
-                linkData.split('|').forEach(item => {
-                    if (!item.trim()) return;
-                    let [name, url] = item.split('>');
-                    const a = document.createElement('a'); a.className = 'ext-link'; a.href = (url || name).trim(); a.target = "_blank"; a.innerText = name.trim();
-                    container.appendChild(a);
-                });
-            }
-            document.getElementById('content').scrollTop = 0;
-        }
-
-        function showDef(event, termKey) {
-            event.stopPropagation();
-            const box = document.getElementById('definition-box');
-            const def = definitionsMap.get(termKey.toLowerCase());
-            if (!def) return;
-
-            document.getElementById('def-title').innerText = termKey.toUpperCase();
-            document.getElementById('def-text').innerText = def;
-            box.style.display = 'block';
-            
-            if (window.innerWidth > 1100) {
-                let x = event.clientX + 15, y = event.clientY - 20;
-                if (x + 340 > window.innerWidth) x = window.innerWidth - 350;
-                if (y + 250 > window.innerHeight) y = window.innerHeight - 270;
-                box.style.left = x + 'px'; box.style.top = y + 'px';
-                document.getElementById('mobile-close-btn').style.display = 'none';
-            } else {
-                document.getElementById('mobile-close-btn').style.display = 'block';
-            }
-        }
-
-        function hideDef() { document.getElementById('definition-box').style.display = 'none'; }
-        window.onclick = hideDef;
-        init();
-    </script>
-</body>
-</html>
+                document.onmousemove = (e) => { sidebar.style.width = e.clientX + 'px
