@@ -2,309 +2,137 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DMA Legal Explorer</title>
+    <title>DMA Explorer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        :root { 
-            --eu-blue: #0e477d;
-            --eu-blue-light: #e1e8ed;
-            --sidebar-bg: #f3f6f7;
-            --text-main: #333333;
-            --border-color: #c5d1d8;
-            /* Official EU Font Stack */
-            --font-family: "Arial", "Helvetica", sans-serif; 
-        }
-
-        * { box-sizing: border-box; }
-
-        body { 
-            font-family: var(--font-family); 
-            margin: 0; 
-            display: flex; 
-            height: 100vh; 
-            background: #fff; 
-            color: var(--text-main);
-            overflow: hidden;
-        }
-
-        /* SIDEBAR */
-        #sidebar { 
-            width: 320px; 
-            background: var(--sidebar-bg); 
-            border-right: 1px solid var(--border-color); 
-            display: flex; 
-            flex-direction: column; 
-            flex-shrink: 0;
-        }
-
-        .sidebar-header { 
-            padding: 24px 20px; 
-            background: var(--eu-blue); 
-            color: white; 
-        }
-
-        .sidebar-header h2 { margin: 0; font-size: 1.25rem; letter-spacing: 0.5px; }
-
-        #language-select {
-            width: 100%;
-            margin-top: 15px;
-            padding: 8px;
-            border-radius: 4px;
-            border: none;
-            font-size: 0.9rem;
-        }
-
-        #article-list { 
-            flex: 1; 
-            overflow-y: auto; 
-        }
-
-        .section-header { 
-            padding: 12px 20px; 
-            background: var(--eu-blue-light); 
-            font-weight: bold; 
-            font-size: 0.75rem; 
-            color: #555; 
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .nav-item { 
-            padding: 16px 20px; 
-            border-bottom: 1px solid #dbe3e8; 
-            cursor: pointer; 
-            transition: background 0.2s;
-            line-height: 1.4;
-        }
-
-        .nav-item:hover { background: #e9eff2; }
+        :root { --eu-blue: #0e477d; --sidebar-bg: #f3f6f7; --font-main: "Arial", sans-serif; }
+        body { font-family: var(--font-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        .nav-item.active { 
-            background: #ffffff; 
-            border-left: 6px solid var(--eu-blue); 
-            padding-left: 14px;
-        }
+        #sidebar { width: 320px; background: var(--sidebar-bg); border-right: 1px solid #c5d1d8; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; background: var(--eu-blue); color: white; }
+        #article-list { flex: 1; overflow-y: auto; }
+        
+        /* Navigation Styling */
+        .section-header { padding: 10px 20px; background: #e1e8ed; font-weight: bold; font-size: 0.7rem; color: #555; text-transform: uppercase; cursor: pointer; display: flex; justify-content: space-between; }
+        .nav-item { padding: 12px 20px; border-bottom: 1px solid #dbe3e8; cursor: pointer; transition: 0.2s; }
+        .nav-item:hover { background: #e9eff2; }
+        .nav-item.active { background: #fff; border-left: 5px solid var(--eu-blue); font-weight: bold; }
+        .nav-item small { display: block; color: #666; font-size: 0.75rem; font-weight: normal; margin-top: 4px; }
+        .hidden { display: none; }
 
-        .nav-item strong { display: block; color: var(--eu-blue); font-size: 0.95rem; }
-        .nav-item small { display: block; color: #666; font-size: 0.8rem; margin-top: 4px; }
+        /* Content Area */
+        #main-view { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        #content { flex: 1; padding: 40px 60px; overflow-y: auto; }
+        h2#art-label { color: var(--eu-blue); border-bottom: 2px solid #e1e8ed; padding-bottom: 15px; }
+        .article-text { line-height: 1.7; font-size: 1.05rem; text-align: justify; }
 
-        /* MAIN CONTENT AREA */
-        #main-view { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            min-width: 0; 
-        }
-
-        #content { 
-            flex: 1; 
-            padding: 40px 60px; 
-            overflow-y: auto; 
-        }
-
-        h2#art-label { 
-            font-size: 2rem; 
-            color: var(--eu-blue); 
-            margin-bottom: 25px; 
-            padding-bottom: 15px; 
-            border-bottom: 2px solid var(--eu-blue-light);
-        }
-
-        .article-text { 
-            line-height: 1.7; 
-            font-size: 1.1rem; 
-            color: #222; 
-            text-align: justify;
-        }
-
-        /* RECITALS PANEL (Right side) */
-        #recitals-panel { 
-            width: 380px; 
-            background: #f9f9f9; 
-            border-left: 1px solid var(--border-color); 
-            padding: 20px; 
-            overflow-y: auto;
-        }
-
-        #recitals-panel h3 {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            color: #888;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
-        }
-
-        details { 
-            background: white; 
-            border: 1px solid #ddd; 
-            border-radius: 4px; 
-            margin-bottom: 12px; 
-            padding: 12px; 
-        }
-
-        summary { 
-            cursor: pointer; 
-            font-weight: bold; 
-            color: var(--eu-blue); 
-            outline: none; 
-        }
-
-        .recital-content { 
-            margin-top: 10px; 
-            padding-top: 10px; 
-            border-top: 1px solid #eee; 
-            font-size: 0.95rem; 
-            line-height: 1.5; 
-        }
-
-        /* FOOTER / RESOURCES */
-        #resources-area { 
-            padding: 20px 60px; 
-            background: #f4f4f4; 
-            border-top: 1px solid #ddd; 
-        }
-
-        /* DIAGNOSTICS */
-        #diag-console {
-            background: #000;
-            color: #0f0;
-            font-family: monospace;
-            font-size: 0.7rem;
-            padding: 8px 15px;
-            max-height: 100px;
-            overflow-y: auto;
-        }
+        /* Panels */
+        #recitals-panel { width: 350px; background: #f9f9f9; border-left: 1px solid #ddd; padding: 20px; overflow-y: auto; }
+        details { background: white; border: 1px solid #ddd; margin-bottom: 8px; padding: 10px; border-radius: 4px; }
+        summary { cursor: pointer; font-weight: bold; color: var(--eu-blue); font-size: 0.85rem; }
+        
+        #external-links-area { padding: 15px 60px; background: #f4f4f4; border-top: 1px solid #ddd; display: flex; gap: 20px; }
+        .ext-link { color: var(--eu-blue); text-decoration: none; font-weight: bold; font-size: 0.85rem; border: 1px solid var(--eu-blue); padding: 5px 10px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
     <div id="sidebar">
         <div class="sidebar-header">
-            <h2>DMA Explorer</h2>
-            <select id="language-select" onchange="loadLanguageData()">
+            <h2 style="margin:0; font-size:1.1rem;">DMA Explorer</h2>
+            <select id="language-select" onchange="loadLanguageData()" style="width:100%; margin-top:10px;">
                 <option value="en">English (EN)</option>
                 <option value="fr">Français (FR)</option>
                 <option value="de">Deutsch (DE)</option>
             </select>
         </div>
         <div id="article-list"></div>
-        <div id="diag-console">System Initializing...</div>
     </div>
 
     <div id="main-view">
         <div id="content">
-            <h2 id="art-label">Select a Provision</h2>
-            <div id="art-text" class="article-text">
-                Please select an article from the left sidebar to view the legal text and associated recitals.
-            </div>
+            <h2 id="art-label">Select Content</h2>
+            <div id="art-text" class="article-text"></div>
         </div>
-        <div id="resources-area">
-            <div id="links-container"></div>
-        </div>
+        <div id="external-links-area"></div>
     </div>
 
     <div id="recitals-panel">
-        <h3>Related Recitals</h3>
+        <h3 style="font-size:0.8rem; color:#888; text-transform:uppercase;">Related References</h3>
         <div id="recitals-list"></div>
     </div>
 
     <script>
         let dmaData = [];
         let masterLinks = [];
+        let recitalsVisible = false;
 
-        function log(msg) {
-            const con = document.getElementById('diag-console');
-            con.innerHTML += `<div>> ${msg}</div>`;
-            con.scrollTop = con.scrollHeight;
-        }
-
-        // Robust value fetcher that ignores case/spaces in CSV headers
         const getVal = (row, key) => {
             if (!row) return "";
-            const actualKey = Object.keys(row).find(k => k.trim().toLowerCase() === key.toLowerCase());
-            return actualKey ? row[actualKey].trim() : "";
+            const k = Object.keys(row).find(x => x.trim().toLowerCase() === key.toLowerCase());
+            return k ? row[k].trim() : "";
         };
 
         async function init() {
-            try {
-                log("Fetching master_links.csv...");
-                const resp = await fetch('master_links.csv');
-                if(!resp.ok) throw new Error("Could not find master_links.csv");
-                const text = await resp.text();
-                
-                // Parse master links (uses semicolon or comma automatically)
-                masterLinks = Papa.parse(text, { header: true, skipEmptyLines: true }).data;
-                log(`Loaded ${masterLinks.length} items from master mapping.`);
-                
-                loadLanguageData();
-            } catch (e) {
-                log("CRITICAL ERROR: " + e.message);
-            }
+            const resp = await fetch('master_links.csv');
+            const text = await resp.text();
+            masterLinks = Papa.parse(text, { header: true, skipEmptyLines: true }).data;
+            loadLanguageData();
         }
 
         async function loadLanguageData() {
             const lang = document.getElementById('language-select').value;
-            log(`Loading data/dma_${lang}.csv...`);
-            
-            try {
-                const resp = await fetch(`data/dma_${lang}.csv`);
-                if(!resp.ok) throw new Error(`data/dma_${lang}.csv not found.`);
-                const text = await resp.text();
-                
-                dmaData = Papa.parse(text, { header: true, skipEmptyLines: true }).data;
-                log(`Success: Found ${dmaData.length} total rows.`);
-                
-                renderSidebar();
-            } catch (e) {
-                log("ERROR: " + e.message);
-                document.getElementById('article-list').innerHTML = `<div style="padding:20px; color:red;">Data file for "${lang}" not found.</div>`;
-            }
+            const resp = await fetch(`data/dma_${lang}.csv`);
+            const text = await resp.text();
+            dmaData = Papa.parse(text, { header: true, skipEmptyLines: true }).data;
+            renderSidebar();
         }
 
         function renderSidebar() {
             const list = document.getElementById('article-list');
             const lang = document.getElementById('language-select').value;
-            list.innerHTML = '<div class="section-header">Articles & Annexes</div>';
-            
-            // FILTER: We only want things that are Articles or Annexes
-            const provisions = dmaData.filter(row => {
-                const type = getVal(row, 'Type').toLowerCase();
-                return type.includes('article') || type.includes('annex');
-            });
+            list.innerHTML = '';
 
-            log(`Filtering: ${provisions.length} provisions found.`);
+            // 1. RECITALS SECTION (Collapsible)
+            const recHeader = document.createElement('div');
+            recHeader.className = 'section-header';
+            recHeader.innerHTML = `<span>Recitals</span> <span>${recitalsVisible ? '▼' : '▶'}</span>`;
+            recHeader.onclick = () => { recitalsVisible = !recitalsVisible; renderSidebar(); };
+            list.appendChild(recHeader);
 
-            if (provisions.length === 0) {
-                log("WARNING: 0 articles found. Check your CSV 'Type' column.");
-                list.innerHTML += '<div style="padding:20px; color:orange;">No articles found in CSV.</div>';
-                return;
+            if (recitalsVisible) {
+                dmaData.filter(r => getVal(r, 'Type') === 'Recital').forEach(row => {
+                    list.appendChild(createNavItem(row, lang));
+                });
             }
 
-            provisions.forEach(row => {
-                const id = getVal(row, 'ID');
-                const label = getVal(row, 'Label');
-                
-                // Match with Master Links for the Title
-                const map = masterLinks.find(m => getVal(m, 'ID') === id);
-                const title_parsed = getVal(row, 'Title');
-                const title_map = getVal(map, `Title_${lang.toUpperCase()}`) || getVal(map, 'Title');
-                
-                const item = document.createElement('div');
-                item.className = 'nav-item';
-                item.id = `nav-${id}`;
-                item.innerHTML = `
-                    <strong>${label}</strong>
-                    <small>${title_parsed || title_map || 'General Provision'}</small>
-                `;
-                item.onclick = () => displayArticle(id);
-                list.appendChild(item);
+            // 2. ARTICLES SECTION
+            const artHeader = document.createElement('div');
+            artHeader.className = 'section-header';
+            artHeader.innerText = 'Provisions';
+            list.appendChild(artHeader);
+
+            dmaData.filter(r => getVal(r, 'Type') !== 'Recital').forEach(row => {
+                list.appendChild(createNavItem(row, lang));
             });
         }
 
-        function displayArticle(id) {
-            // UI Active State
+        function createNavItem(row, lang) {
+            const id = getVal(row, 'ID');
+            const map = masterLinks.find(m => getVal(m, 'ID') === id);
+            
+            // PRIORITY: Subparagraph Unofficial Title > Parsed Title > Master Title
+            const title = getVal(map, `Title_${lang.toUpperCase()}`) || getVal(map, 'Title') || getVal(row, 'Title');
+            
+            const div = document.createElement('div');
+            div.className = 'nav-item';
+            div.id = `nav-${id}`;
+            div.innerHTML = `<strong>${getVal(row, 'Label')}</strong><small>${title}</small>`;
+            div.onclick = () => displayContent(id);
+            return div;
+        }
+
+        function displayContent(id) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`nav-${id}`)?.classList.add('active');
 
@@ -312,46 +140,47 @@
             const row = dmaData.find(r => getVal(r, 'ID') === id);
             const map = masterLinks.find(m => getVal(m, 'ID') === id);
 
-            if (!row) return;
-
-            // Main Text
-            const title = getVal(row, 'Title') || getVal(map, `Title_${lang.toUpperCase()}`) || getVal(map, 'Title');
+            // Set Title & Text
+            const title = getVal(map, `Title_${lang.toUpperCase()}`) || getVal(map, 'Title') || getVal(row, 'Title');
             document.getElementById('art-label').innerText = `${getVal(row, 'Label')}: ${title}`;
             document.getElementById('art-text').innerHTML = getVal(row, 'Text');
 
-            // Related Recitals
-            const recContainer = document.getElementById('recitals-list');
-            recContainer.innerHTML = '';
+            // Handle Related References (Recitals AND Annex)
+            const recList = document.getElementById('recitals-list');
+            recList.innerHTML = '';
+            const refs = getVal(map, 'Related_Recitals').split(',').map(s => s.trim());
             
-            const relatedStr = getVal(map, 'Related_Recitals');
-            if (relatedStr) {
-                const recitalIds = relatedStr.split(',').map(s => s.trim());
-                recitalIds.forEach(num => {
-                    const recitalRow = dmaData.find(r => getVal(r, 'ID') === `REC_${num}`);
-                    if (recitalRow) {
-                        const det = document.createElement('details');
-                        det.innerHTML = `
-                            <summary>Recital ${num}</summary>
-                            <div class="recital-content">${getVal(recitalRow, 'Text')}</div>
-                        `;
-                        recContainer.appendChild(det);
-                    }
-                });
-            } else {
-                recContainer.innerHTML = '<div style="color:#aaa; font-style:italic; font-size:0.8rem;">No related recitals mapped.</div>';
-            }
+            refs.forEach(ref => {
+                // Check if reference is a Recital or Annex
+                const isAnnex = ref.toUpperCase() === "ANNEX";
+                const searchId = isAnnex ? "ANNEX_MAIN" : `REC_${ref}`;
+                const refData = dmaData.find(x => getVal(x, 'ID') === searchId);
+                
+                if (refData) {
+                    const d = document.createElement('details');
+                    d.innerHTML = `<summary>${isAnnex ? 'Annex' : 'Recital ' + ref}</summary><div style="font-size:0.85rem; padding:10px;">${getVal(refData, 'Text')}</div>`;
+                    recList.appendChild(d);
+                }
+            });
 
-            // External Links
-            const linkUrl = getVal(map, 'External_Links');
-            const linkName = getVal(map, 'Link_Name') || "View Official Source ↗";
-            document.getElementById('links-container').innerHTML = linkUrl 
-                ? `<a href="${linkUrl}" target="_blank" style="color:var(--eu-blue); font-weight:bold; text-decoration:none; font-size:0.9rem;">${linkName}</a>`
-                : '<span style="color:#aaa; font-size:0.8rem;">No external resources available.</span>';
+            // Handle Multiple External Links (Split by |)
+            const linksArea = document.getElementById('external-links-area');
+            linksArea.innerHTML = '';
+            const urls = getVal(map, 'External_Links').split('|');
+            const names = getVal(map, 'Link_Name').split('|');
 
-            document.getElementById('content').scrollTop = 0;
+            urls.forEach((url, index) => {
+                if (url.trim()) {
+                    const a = document.createElement('a');
+                    a.className = 'ext-link';
+                    a.href = url.trim();
+                    a.target = "_blank";
+                    a.innerText = names[index] ? names[index].trim() : "Link " + (index + 1);
+                    linksArea.appendChild(a);
+                }
+            });
         }
 
-        // Start
         init();
     </script>
 </body>
