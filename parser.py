@@ -11,6 +11,7 @@ OUTPUT_FOLDER = 'data'
 if not os.path.exists(OUTPUT_FOLDER):
     os.makedirs(OUTPUT_FOLDER)
 
+# Markers to identify the start of the actual Regulation text
 ADOPTION_TRIGGERS = [
     r"HAVE ADOPTED THIS REGULATION", 
     r"HAS ADOPTED THIS REGULATION", 
@@ -18,6 +19,7 @@ ADOPTION_TRIGGERS = [
     r"ONT ADOPTÉ LE PRÉSENT RÈGLEMENT"
 ]
 
+# Robust patterns for Article 1 (EN, DE, FR)
 ARTICLE_ONE_PATTERNS = [
     r"^Article\s+1\b", 
     r"^Artikel\s+1\b", 
@@ -28,9 +30,9 @@ ARTICLE_ONE_PATTERNS = [
 CHAPTER_KEYWORDS = ["CHAPTER", "KAPITEL", "CHAPITRE"]
 
 def parse_dma():
-    html_files = glob.glob(f"{SOURCE_FOLDER}/*.html")
+    html_files = glob.glob(os.path.join(SOURCE_FOLDER, "*.html"))
     if not html_files:
-        print(f"No HTML files found in {SOURCE_FOLDER}")
+        print(f"Error: No HTML files found in {SOURCE_FOLDER}")
         return
 
     for file_path in html_files:
@@ -49,10 +51,11 @@ def parse_dma():
         get_art_title_next = False
         get_chap_title_next = False
 
-        # Extraction logic
+        # Extract all potential text elements
         elements = soup.find_all(['p', 'tr', 'h1', 'h2', 'h3', 'div'])
         
         for el in elements:
+            # Avoid duplicate text from nested tags
             if el.name == 'p' and el.find_parent(['tr', 'div', 'p']): 
                 continue
             
@@ -60,7 +63,7 @@ def parse_dma():
             if not text or len(text) < 2: 
                 continue
 
-            # CHAPTERS
+            # 1. CHAPTERS
             if any(text.upper().startswith(k) for k in CHAPTER_KEYWORDS) and len(text) < 30:
                 data.append({'ID': f'CH_{len(data)}', 'Type': 'Chapter', 'Label': text, 'Title': '', 'Text': ''})
                 get_chap_title_next = True
@@ -72,26 +75,28 @@ def parse_dma():
                 get_chap_title_next = False
                 continue
 
-            # PREAMBLE TRANSITION
+            # 2. DETECT BODY START (Article 1)
             if not passed_preamble:
-                if any(re.search(m, text.upper()) for m in ADOPTION_TRIGGERS) or any(re.search(p, text, re.IGNORECASE) for p in ARTICLE_ONE_PATTERNS):
+                is_adoption = any(re.search(m, text.upper()) for m in ADOPTION_TRIGGERS)
+                is_art_one = any(re.search(p, text, re.IGNORECASE) for p in ARTICLE_ONE_PATTERNS)
+                if is_adoption or is_art_one:
                     passed_preamble = True
 
-            # ANNEX
+            # 3. ANNEX
             if "ANNEX" in text.upper() and len(text) < 15:
                 parsing_annex = True
                 current_art_num = "ANNEX_MAIN"
                 current_sub_id = "ANNEX_MAIN"
                 continue
 
-            # RECITALS
+            # 4. RECITALS
             if not passed_preamble and not parsing_annex:
                 rec_match = re.match(r'^\((\d+)\)\s+(.*)', text)
                 if rec_match:
                     data.append({'ID': f'REC_{rec_match.group(1)}', 'Type': 'Recital', 'Label': f'Recital ({rec_match.group(1)})', 'Title': '', 'Text': text})
                 continue
 
-            # ARTICLES
+            # 5. ARTICLES
             if passed_preamble and not parsing_annex:
                 is_art_head = (any(text.startswith(w) for w in ["Article", "Artikel", "Artigo", "Articolo", "Artículo"]) and len(text) < 50)
                 if is_art_head:
@@ -101,7 +106,7 @@ def parse_dma():
                         current_sub_id = current_art_num
                         get_art_title_next = True
                         continue
-                    elif "premier" in text.lower() or "1er" in text.lower():
+                    elif any(kw in text.lower() for kw in ["premier", "1er"]):
                         current_art_num = "Article_1"
                         current_sub_id = "Article_1"
                         get_art_title_next = True
@@ -112,18 +117,18 @@ def parse_dma():
                     get_art_title_next = False
                     continue
 
-            # CONTENT STORAGE
+            # 6. CONTENT CAPTURE
             if current_art_num:
                 row_type = 'Article Paragraph' if not parsing_annex else 'Annex'
                 
-                # Check for sub-paragraph markers in Art 5 and 6
+                # Logic for Art 5 & 6 sub-paragraphs
                 if current_art_num in ["Article_5", "Article_6"]:
                     para_match = re.match(r'^(\d+)\.\s+|^\((\d+)\)\s+', text)
                     if para_match:
                         p_num = para_match.group(1) or para_match.group(2)
                         current_sub_id = f"{current_art_num}_{p_num}"
                 
-                # FORMATTING THE LABEL: Art. 5_1 -> Art. 5(1)
+                # FORCE FORMAT: Art. 5(1)
                 parts = current_sub_id.split('_')
                 if len(parts) == 3:
                     label = f"Art. {parts[1]}({parts[2]})"
@@ -141,25 +146,20 @@ def parse_dma():
                     'Text': text
                 })
 
+        # Save to CSV
         if data:
             df = pd.DataFrame(data)
             res = []
-            # Use dict.fromkeys to preserve order and deduplicate text fragments
             for name, group in df.groupby(['ID', 'Type', 'Label'], sort=False):
                 res.append({
-                    'ID': name[0], 
-                    'Type': name[1], 
-                    'Label': name[2],
+                    'ID': name[0], 'Type': name[1], 'Label': name[2],
                     'Title': group['Title'].iloc[0],
                     'Text': '<br><br>'.join(dict.fromkeys(group['Text']))
                 })
             
-            output_df = pd.DataFrame(res)
-            output_filename = f"{OUTPUT_FOLDER}/dma_{lang_code}.csv"
-            
-            # Force overwrite and confirm
-            output_df.to_csv(output_filename, index=False, encoding='utf-8')
-            print(f"SUCCESS: {output_filename} updated at {time.strftime('%H:%M:%S')}")
+            output_file = os.path.join(OUTPUT_FOLDER, f"dma_{lang_code}.csv")
+            pd.DataFrame(res).to_csv(output_file, index=False, encoding='utf-8')
+            print(f"SUCCESS: {output_file} overwritten at {time.strftime('%H:%M:%S')}")
 
 if __name__ == "__main__":
     parse_dma()
