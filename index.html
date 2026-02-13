@@ -7,25 +7,26 @@
     <style>
         :root { --eu-blue: #0e477d; --sidebar-bg: #f3f6f7; --font-main: "Arial", sans-serif; }
         body { font-family: var(--font-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        #sidebar { width: 340px; background: var(--sidebar-bg); border-right: 1px solid #c5d1d8; display: flex; flex-direction: column; }
+        #sidebar { width: 350px; background: var(--sidebar-bg); border-right: 1px solid #c5d1d8; display: flex; flex-direction: column; }
         .sidebar-header { padding: 20px; background: var(--eu-blue); color: white; }
         #article-list { flex: 1; overflow-y: auto; }
-        .chapter-separator { padding: 15px 20px; background: #d0d9e0; font-weight: bold; font-size: 0.8rem; color: #333; border-bottom: 1px solid #b8c5ce; line-height: 1.3; }
-        .section-header { padding: 10px 20px; background: #e1e8ed; font-weight: bold; font-size: 0.75rem; color: #555; text-transform: uppercase; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid #c5d1d8; }
-        .nav-item { padding: 12px 20px; border-bottom: 1px solid #dbe3e8; cursor: pointer; transition: 0.2s; background: #fff; }
+        .chapter-separator { padding: 15px 20px; background: #d0d9e0; font-weight: bold; font-size: 0.8rem; color: #333; border-bottom: 1px solid #b8c5ce; }
+        .section-header { padding: 12px 20px; background: #e1e8ed; font-weight: bold; font-size: 0.75rem; color: #555; text-transform: uppercase; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid #c5d1d8; }
+        .nav-item { padding: 14px 20px; border-bottom: 1px solid #dbe3e8; cursor: pointer; transition: 0.2s; background: #fff; }
         .nav-item:hover { background: #e9eff2; }
         .nav-item.active { background: #f0f7ff; border-left: 6px solid var(--eu-blue); padding-left: 14px; font-weight: bold; }
-        .nav-item small { display: block; color: #666; font-size: 0.78rem; font-weight: normal; margin-top: 4px; }
+        .nav-item small { display: block; color: #666; font-size: 0.78rem; font-weight: normal; margin-top: 5px; }
         #main-view { flex: 1; display: flex; flex-direction: column; min-width: 0; }
         #content { flex: 1; padding: 40px 60px; overflow-y: auto; }
-        h2#art-label { color: var(--eu-blue); border-bottom: 2px solid #e1e8ed; padding-bottom: 15px; margin-top: 0; font-size: 1.5rem; }
-        .article-text { line-height: 1.75; font-size: 1.1rem; text-align: justify; color: #222; }
+        h2#art-label { color: var(--eu-blue); border-bottom: 2px solid #e1e8ed; padding-bottom: 15px; margin-top: 0; font-size: 1.6rem; }
+        .article-text { line-height: 1.8; font-size: 1.1rem; text-align: justify; color: #222; }
         #recitals-panel { width: 380px; background: #f9f9f9; border-left: 1px solid #ddd; padding: 20px; overflow-y: auto; }
         #recitals-panel h3 { font-size: 0.8rem; color: #888; text-transform: uppercase; margin-bottom: 20px; }
-        details { background: white; border: 1px solid #ddd; margin-bottom: 8px; padding: 12px; border-radius: 4px; }
-        summary { cursor: pointer; font-weight: bold; color: var(--eu-blue); font-size: 0.85rem; }
-        #external-links-area { padding: 15px 60px; background: #f4f4f4; border-top: 1px solid #ddd; display: flex; gap: 15px; }
-        .ext-link { color: var(--eu-blue); text-decoration: none; font-weight: bold; font-size: 0.8rem; border: 1px solid var(--eu-blue); padding: 6px 12px; border-radius: 4px; background: white; }
+        details { background: white; border: 1px solid #ddd; margin-bottom: 10px; padding: 12px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        summary { cursor: pointer; font-weight: bold; color: var(--eu-blue); font-size: 0.85rem; line-height: 1.3; }
+        #external-links-area { padding: 15px 60px; background: #f4f4f4; border-top: 1px solid #ddd; display: flex; gap: 15px; flex-wrap: wrap; }
+        .ext-link { color: var(--eu-blue); text-decoration: none; font-weight: bold; font-size: 0.8rem; border: 1px solid var(--eu-blue); padding: 6px 12px; border-radius: 4px; background: white; transition: 0.2s; }
+        .ext-link:hover { background: var(--eu-blue); color: white; }
     </style>
 </head>
 <body>
@@ -43,7 +44,7 @@
     <div id="main-view">
         <div id="content">
             <h2 id="art-label">Select a Provision</h2>
-            <div id="art-text" class="article-text">Select content from the sidebar.</div>
+            <div id="art-text" class="article-text">Please select a recital or article from the sidebar to begin.</div>
         </div>
         <div id="external-links-area"></div>
     </div>
@@ -63,10 +64,18 @@
             return k ? row[k].trim() : "";
         };
 
+        function resolveTitle(row, map, lang, id) {
+            const extracted = getVal(row, 'Title');
+            const masterLang = getVal(map, `Title_${lang.toUpperCase()}`);
+            const masterUnofficial = getVal(map, 'Title');
+            if (id.includes('_') && id.split('_').length > 2) return masterLang || masterUnofficial || extracted;
+            return masterLang || extracted || masterUnofficial;
+        }
+
         async function init() {
             const resp = await fetch('master_links.csv');
             const text = await resp.text();
-            masterLinks = Papa.parse(text, { header: true, skipEmptyLines: true }).data;
+            masterLinks = Papa.parse(text, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
             loadLanguageData();
         }
 
@@ -82,33 +91,26 @@
             const list = document.getElementById('article-list');
             const lang = document.getElementById('language-select').value;
             list.innerHTML = '';
-
             const recHeader = document.createElement('div');
             recHeader.className = 'section-header';
             recHeader.innerHTML = `<span>Recitals</span> <span>${recitalsVisible ? '▼' : '▶'}</span>`;
             recHeader.onclick = () => { recitalsVisible = !recitalsVisible; renderSidebar(); };
             list.appendChild(recHeader);
-
-            if (recitalsVisible) {
-                dmaData.filter(r => getVal(r, 'Type') === 'Recital').forEach(row => list.appendChild(createNavItem(row, lang)));
-            }
-
+            if (recitalsVisible) dmaData.filter(r => getVal(r, 'Type') === 'Recital').forEach(row => list.appendChild(createNavItem(row, lang)));
             dmaData.filter(r => getVal(r, 'Type') !== 'Recital').forEach(row => {
                 if (getVal(row, 'Type') === 'Chapter') {
                     const ch = document.createElement('div');
                     ch.className = 'chapter-separator';
                     ch.innerText = getVal(row, 'Label');
                     list.appendChild(ch);
-                } else {
-                    list.appendChild(createNavItem(row, lang));
-                }
+                } else list.appendChild(createNavItem(row, lang));
             });
         }
 
         function createNavItem(row, lang) {
             const id = getVal(row, 'ID');
             const map = masterLinks.find(m => getVal(m, 'ID') === id);
-            const title = getVal(map, `Title_${lang.toUpperCase()}`) || getVal(map, 'Title') || getVal(row, 'Title');
+            const title = resolveTitle(row, map, lang, id);
             const div = document.createElement('div');
             div.className = 'nav-item';
             div.id = `nav-${id}`;
@@ -120,39 +122,32 @@
         function displayContent(id) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`nav-${id}`)?.classList.add('active');
-
             const lang = document.getElementById('language-select').value;
             const row = dmaData.find(r => getVal(r, 'ID') === id);
             const map = masterLinks.find(m => getVal(m, 'ID') === id);
-
-            const title = getVal(map, `Title_${lang.toUpperCase()}`) || getVal(map, 'Title') || getVal(row, 'Title');
+            const title = resolveTitle(row, map, lang, id);
             document.getElementById('art-label').innerText = `${getVal(row, 'Label')}: ${title}`;
             document.getElementById('art-text').innerHTML = getVal(row, 'Text');
 
             const sideList = document.getElementById('recitals-list');
             sideList.innerHTML = '';
-
             if (getVal(row, 'Type') === 'Recital') {
-                const recitalNum = id.replace('REC_', '');
+                const num = id.replace('REC_', '');
                 masterLinks.forEach(m => {
-                    const recs = getVal(m, 'Related_Recitals').split(',').map(s => s.trim());
-                    if (recs.includes(recitalNum)) {
-                        const artId = getVal(m, 'ID');
-                        const artData = dmaData.find(x => getVal(x, 'ID') === artId);
+                    const recs = getVal(m, 'Related_Recitals').split(',').map(s => s.trim().toLowerCase());
+                    if (recs.includes(num)) {
+                        const artData = dmaData.find(x => getVal(x, 'ID') === getVal(m, 'ID'));
                         if (artData) {
-                            const artTitle = getVal(m, `Title_${lang.toUpperCase()}`) || getVal(m, 'Title') || getVal(artData, 'Title');
                             const d = document.createElement('details');
-                            d.innerHTML = `<summary>${getVal(artData, 'Label')}: ${artTitle}</summary><div style="font-size:0.85rem; padding:10px;">${getVal(artData, 'Text')}</div>`;
+                            d.innerHTML = `<summary>${getVal(artData, 'Label')}: ${resolveTitle(artData, m, lang, getVal(m, 'ID'))}</summary><div style="font-size:0.85rem; padding:10px;">${getVal(artData, 'Text')}</div>`;
                             sideList.appendChild(d);
                         }
                     }
                 });
             } else {
-                const refs = getVal(map, 'Related_Recitals').split(',').map(s => s.trim());
-                refs.forEach(ref => {
+                getVal(map, 'Related_Recitals').split(',').map(s => s.trim()).forEach(ref => {
                     const isAnnex = ref.toLowerCase() === "annex";
-                    const searchId = isAnnex ? "ANNEX_MAIN" : `REC_${ref}`;
-                    const refData = dmaData.find(x => getVal(x, 'ID') === searchId);
+                    const refData = dmaData.find(x => getVal(x, 'ID') === (isAnnex ? "ANNEX_MAIN" : `REC_${ref}`));
                     if (refData) {
                         const d = document.createElement('details');
                         d.innerHTML = `<summary>${isAnnex ? 'Annex' : 'Recital ' + ref}</summary><div style="font-size:0.85rem; padding:10px;">${getVal(refData, 'Text')}</div>`;
@@ -161,17 +156,25 @@
                 });
             }
 
+            // NEW LINK LOGIC: Handles "Name > URL"
             const linksArea = document.getElementById('external-links-area');
             linksArea.innerHTML = '';
-            const urls = getVal(map, 'External_Links').split('|');
-            const names = getVal(map, 'Link_Name').split('|');
-            urls.forEach((url, i) => {
-                if (url.trim()) {
-                    const a = document.createElement('a');
-                    a.className = 'ext-link'; a.href = url.trim(); a.target = "_blank";
-                    a.innerText = names[i] ? names[i].trim() : "Reference " + (i+1);
-                    linksArea.appendChild(a);
+            const rawLinks = getVal(map, 'External_Links').split('|');
+            rawLinks.forEach((item, i) => {
+                if (!item.trim()) return;
+                let name = `Link ${i+1}`;
+                let url = item.trim();
+                
+                if (item.includes('>')) {
+                    const parts = item.split('>');
+                    name = parts[0].trim();
+                    url = parts[1].trim();
                 }
+
+                const a = document.createElement('a');
+                a.className = 'ext-link'; a.href = url; a.target = "_blank";
+                a.innerText = name;
+                linksArea.appendChild(a);
             });
             document.getElementById('content').scrollTop = 0;
         }
