@@ -13,6 +13,7 @@ if not os.path.exists(OUTPUT_FOLDER):
 html_files = glob.glob(f"{SOURCE_FOLDER}/*.html")
 
 for file_path in html_files:
+    # Captures 'fr', 'en', 'de', etc. from filenames like 'dma_fr.html'
     lang_code = os.path.basename(file_path).split('_')[-1].replace('.html', '')
     print(f"Processing: {lang_code}")
     
@@ -24,38 +25,56 @@ for file_path in html_files:
     parsing_annex = False
     passed_toc = False 
 
-    # We only look for <p> tags for text and <tr> for Annex tables
     for el in soup.find_all(['p', 'tr']):
         text = el.get_text(" ", strip=True).replace('\xa0', ' ').strip()
         if not text or len(text) < 2: continue
 
-        # 1. TRIGGER: Start of actual content (ignores Table of Contents)
-        if "HAS ADOPTED THIS REGULATION" in text.upper() or "HAT FOLGENDE VERORDNUNG ERLASSEN" in text.upper():
+        # 1. TRIGGER: Pivot from Recitals to Articles
+        # Added French: "ONT ADOPTÉ LE PRÉSENT RÈGLEMENT"
+        triggers = [
+            "HAVE ADOPTED THIS REGULATION", 
+            "HAS ADOPTED THIS REGULATION", 
+            "HABEN FOLGENDE VERORDNUNG ERLASSEN",
+            "ONT ADOPTÉ LE PRÉSENT RÈGLEMENT"
+        ]
+        
+        if any(marker in text.upper() for marker in triggers):
             passed_toc = True
+            print(f"--- Found Adoption Trigger in {lang_code} ---")
             continue
 
-        # 2. DETECT ANNEX START
-        if "ANNEX" in text.upper() and len(text) < 15:
+        # 2. DETECT ANNEX START (Usually at the very end)
+        if "ANNEX" in text.upper() and len(text) < 20:
             parsing_annex = True
             current_art_num = "ANNEX_MAIN"
             continue
 
-        # 3. DETECT RECITALS (Only before Articles)
+        # 3. CAPTURE RECITALS (Only happens BEFORE the trigger)
         if not passed_toc and not parsing_annex:
+            # Matches (1), (2), etc.
             rec_match = re.match(r'^\((\d+)\)\s+(.*)', text)
             if rec_match:
-                data.append({'ID': f'REC_{rec_match.group(1)}', 'Type': 'Recital', 'Label': f'Recital ({rec_match.group(1)})', 'Text': text})
+                data.append({
+                    'ID': f'REC_{rec_match.group(1)}', 
+                    'Type': 'Recital', 
+                    'Label': f'Recital ({rec_match.group(1)})', 
+                    'Text': text
+                })
             continue
 
-        # 4. DETECT ARTICLE HEADINGS
+        # 4. DETECT ARTICLE HEADINGS (Only happens AFTER the trigger)
         if not parsing_annex and passed_toc:
-            if (text.startswith("Article") or text.startswith("Artikel")) and len(text) < 25:
+            # Matches "Article 1", "Artikel 1", "Article premier" (FR)
+            is_article_heading = any(text.startswith(word) for word in ["Article", "Artikel"])
+            if is_article_heading and len(text) < 35:
                 art_num_match = re.search(r'\d+', text)
                 if art_num_match:
                     current_art_num = f"Article_{art_num_match.group(0)}"
+                elif "premier" in text.lower(): # Special case for French Article 1
+                    current_art_num = "Article_1"
                 continue
         
-        # 5. HANDLE ANNEX TABLE ROWS
+        # 5. HANDLE ANNEX TABLES
         if parsing_annex and el.name == 'tr':
             cells = el.find_all(['td', 'th'])
             if len(cells) >= 2:
@@ -70,11 +89,10 @@ for file_path in html_files:
                     })
             continue
 
-        # 6. CAPTURE CONTENT
+        # 6. CAPTURE ARTICLE CONTENT
         if current_art_num:
+            # Special check for Articles 5 and 6 to keep granularity
             para_match = re.match(r'^(\d+)\.\s+(.*)', text)
-            
-            # Use Mixed Granularity for Articles 5 & 6
             if current_art_num in ["Article_5", "Article_6"] and para_match:
                 para_id = f"{current_art_num}_{para_match.group(1)}"
                 label = f"{current_art_num.replace('_', ' ')}({para_match.group(1)})"
@@ -91,6 +109,7 @@ for file_path in html_files:
 
     if data:
         df = pd.DataFrame(data)
-        # Merge text by ID to prevent duplication
+        # Final cleanup: Merge multiple paragraphs under the same ID
         df = df.groupby(['ID', 'Type', 'Label'], sort=False)['Text'].apply(lambda x: '<br><br>'.join(dict.fromkeys(x))).reset_index()
         df.to_csv(f"{OUTPUT_FOLDER}/dma_{lang_code}.csv", index=False)
+        print(f"Success: dma_{lang_code}.csv created.")
