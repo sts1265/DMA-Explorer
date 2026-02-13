@@ -13,7 +13,6 @@ if not os.path.exists(OUTPUT_FOLDER):
 html_files = glob.glob(f"{SOURCE_FOLDER}/*.html")
 
 for file_path in html_files:
-    # Captures 'fr', 'en', 'de', etc. from filenames like 'dma_fr.html'
     lang_code = os.path.basename(file_path).split('_')[-1].replace('.html', '')
     print(f"Processing: {lang_code}")
     
@@ -22,76 +21,61 @@ for file_path in html_files:
     
     data = []
     current_art_num = ""
+    current_art_title = ""
     parsing_annex = False
     passed_toc = False 
+    get_title_next = False
 
+    # FIX: Using a more specific selector to avoid nested double-text
+    # We look for p tags that aren't inside other captured tags
     for el in soup.find_all(['p', 'tr']):
         text = el.get_text(" ", strip=True).replace('\xa0', ' ').strip()
         if not text or len(text) < 2: continue
 
-        # 1. TRIGGER: Pivot from Recitals to Articles
-        # Added French: "ONT ADOPTÉ LE PRÉSENT RÈGLEMENT"
-        triggers = [
-            "HAVE ADOPTED THIS REGULATION", 
-            "HAS ADOPTED THIS REGULATION", 
-            "HABEN FOLGENDE VERORDNUNG ERLASSEN",
-            "ONT ADOPTÉ LE PRÉSENT RÈGLEMENT"
-        ]
-        
+        # 1. TRIGGER: Adoption Formula
+        triggers = ["HAVE ADOPTED THIS REGULATION", "HAS ADOPTED THIS REGULATION", 
+                    "HABEN FOLGENDE VERORDNUNG ERLASSEN", "ONT ADOPTÉ LE PRÉSENT RÈGLEMENT"]
         if any(marker in text.upper() for marker in triggers):
             passed_toc = True
-            print(f"--- Found Adoption Trigger in {lang_code} ---")
             continue
 
-        # 2. DETECT ANNEX START (Usually at the very end)
+        # 2. ANNEX START
         if "ANNEX" in text.upper() and len(text) < 20:
             parsing_annex = True
             current_art_num = "ANNEX_MAIN"
             continue
 
-        # 3. CAPTURE RECITALS (Only happens BEFORE the trigger)
+        # 3. RECITALS (BEFORE Adoption)
         if not passed_toc and not parsing_annex:
-            # Matches (1), (2), etc.
             rec_match = re.match(r'^\((\d+)\)\s+(.*)', text)
             if rec_match:
-                data.append({
-                    'ID': f'REC_{rec_match.group(1)}', 
-                    'Type': 'Recital', 
-                    'Label': f'Recital ({rec_match.group(1)})', 
-                    'Text': text
-                })
+                data.append({'ID': f'REC_{rec_match.group(1)}', 'Type': 'Recital', 
+                             'Label': f'Recital ({rec_match.group(1)})', 'Text': text})
             continue
 
-        # 4. DETECT ARTICLE HEADINGS (Only happens AFTER the trigger)
+        # 4. ARTICLE HEADINGS & TITLES
         if not parsing_annex and passed_toc:
-            # Matches "Article 1", "Artikel 1", "Article premier" (FR)
-            is_article_heading = any(text.startswith(word) for word in ["Article", "Artikel"])
-            if is_article_heading and len(text) < 35:
+            # Check if this line is "Article X"
+            if (text.startswith("Article") or text.startswith("Artikel")) and len(text) < 30:
                 art_num_match = re.search(r'\d+', text)
                 if art_num_match:
                     current_art_num = f"Article_{art_num_match.group(0)}"
-                elif "premier" in text.lower(): # Special case for French Article 1
+                    get_title_next = True # The next line will be the title
+                    continue
+                elif "premier" in text.lower():
                     current_art_num = "Article_1"
+                    get_title_next = True
+                    continue
+            
+            # If the previous line was "Article X", this line is the Official Title
+            if get_title_next:
+                current_art_title = text
+                get_title_next = False
                 continue
-        
-        # 5. HANDLE ANNEX TABLES
-        if parsing_annex and el.name == 'tr':
-            cells = el.find_all(['td', 'th'])
-            if len(cells) >= 2:
-                def_title = cells[0].get_text(strip=True)
-                def_text = cells[1].get_text(" ", strip=True)
-                if len(def_title) > 2:
-                    data.append({
-                        'ID': f'ANNEX_{def_title.replace(" ", "_")[:20]}',
-                        'Type': 'Annex Item',
-                        'Label': f'Annex: {def_title}',
-                        'Text': def_text
-                    })
-            continue
 
-        # 6. CAPTURE ARTICLE CONTENT
+        # 5. CONTENT CAPTURE
         if current_art_num:
-            # Special check for Articles 5 and 6 to keep granularity
+            # Handle mixed granularity for Art 5/6
             para_match = re.match(r'^(\d+)\.\s+(.*)', text)
             if current_art_num in ["Article_5", "Article_6"] and para_match:
                 para_id = f"{current_art_num}_{para_match.group(1)}"
@@ -104,12 +88,15 @@ for file_path in html_files:
                 'ID': para_id,
                 'Type': 'Annex' if parsing_annex else 'Article Paragraph',
                 'Label': label,
+                'Title': current_art_title, # Store the language-specific title
                 'Text': text
             })
 
     if data:
         df = pd.DataFrame(data)
-        # Final cleanup: Merge multiple paragraphs under the same ID
-        df = df.groupby(['ID', 'Type', 'Label'], sort=False)['Text'].apply(lambda x: '<br><br>'.join(dict.fromkeys(x))).reset_index()
+        # FIX: The lambda now handles cases where Title might be different across rows
+        df = df.groupby(['ID', 'Type', 'Label'], sort=False).agg({
+            'Title': 'first',
+            'Text': lambda x: '<br><br>'.join(dict.fromkeys(x))
+        }).reset_index()
         df.to_csv(f"{OUTPUT_FOLDER}/dma_{lang_code}.csv", index=False)
-        print(f"Success: dma_{lang_code}.csv created.")
