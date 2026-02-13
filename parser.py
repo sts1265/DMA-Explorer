@@ -10,13 +10,16 @@ OUTPUT_FOLDER = 'data'
 if not os.path.exists(OUTPUT_FOLDER):
     os.makedirs(OUTPUT_FOLDER)
 
-# More robust trigger list (regex-friendly)
-TRIGGERS = [
+# Robust triggers for European legal texts
+ADOPTION_TRIGGERS = [
     r"HAVE ADOPTED THIS REGULATION", 
     r"HAS ADOPTED THIS REGULATION", 
     r"HABEN FOLGENDE VERORDNUNG ERLASSEN", 
     r"ONT ADOPTÉ LE PRÉSENT RÈGLEMENT"
 ]
+
+# Patterns to recognize "Article 1" in various languages
+ARTICLE_ONE_PATTERNS = [r"^Article\s+1\b", r"^Artikel\s+1\b", r"^Article\s+premier\b", r"^Articolo\s+1\b"]
 
 html_files = glob.glob(f"{SOURCE_FOLDER}/*.html")
 
@@ -34,30 +37,36 @@ for file_path in html_files:
     passed_toc = False 
     get_title_next = False
 
-    # FIX: Process ALL tags that might contain text, but focus on the "deepest" ones
-    # to avoid the double-text issue.
-    for el in soup.find_all(['p', 'tr', 'span', 'div']):
-        # Ignore container elements that have children (to avoid double-counting)
-        if el.name in ['div', 'tr'] and (el.find('p') or el.find('span')):
+    # Process tags, excluding those nested inside other text-heavy tags to prevent double-text
+    for el in soup.find_all(['p', 'tr', 'h1', 'h2', 'h3']):
+        # If the tag is inside a table row and we are already processing rows, skip it
+        if el.name == 'p' and el.find_parent('tr'):
             continue
             
         text = el.get_text(" ", strip=True).replace('\xa0', ' ').strip()
         if not text or len(text) < 2: continue
 
-        # 1. TRIGGER: Check for boundary between Recitals and Articles
+        # 1. DETECT TRANSITION TO ARTICLES (The "Trigger")
         if not passed_toc:
-            if any(re.search(marker, text.upper()) for marker in TRIGGERS):
+            # Check for Adoption Formula
+            if any(re.search(marker, text.upper()) for marker in ADOPTION_TRIGGERS):
                 passed_toc = True
-                print(f"   >>> Trigger found in {lang_code}!")
+                print(f"   >>> Found Adoption Trigger")
                 continue
+            # Check for "Article 1" as a fallback trigger
+            if any(re.search(pat, text, re.IGNORECASE) for pat in ARTICLE_ONE_PATTERNS):
+                passed_toc = True
+                print(f"   >>> Found Article 1 (Fallback Trigger)")
+                # Don't 'continue' here, let the Article logic below catch it
 
         # 2. DETECT ANNEX
         if "ANNEX" in text.upper() and len(text) < 25:
             parsing_annex = True
             current_art_num = "ANNEX_MAIN"
+            print(f"   >>> Found Annex")
             continue
 
-        # 3. RECITALS (Only before trigger)
+        # 3. RECITALS (Only if we haven't reached Articles yet)
         if not passed_toc and not parsing_annex:
             rec_match = re.match(r'^\((\d+)\)\s+(.*)', text)
             if rec_match:
@@ -65,16 +74,16 @@ for file_path in html_files:
                              'Label': f'Recital ({rec_match.group(1)})', 'Text': text})
             continue
 
-        # 4. ARTICLE HEADINGS (Only after trigger)
+        # 4. ARTICLE HEADINGS
         if passed_toc and not parsing_annex:
-            # Matches "Article 1", "Artikel 1", etc.
-            if any(text.startswith(w) for w in ["Article", "Artikel", "Artigo", "Articolo"]) and len(text) < 40:
+            # Matches "Article X" or "Artikel X"
+            if any(text.startswith(w) for w in ["Article", "Artikel", "Artigo", "Articolo"]) and len(text) < 45:
                 num_match = re.search(r'\d+', text)
                 if num_match:
                     current_art_num = f"Article_{num_match.group(0)}"
                     get_title_next = True 
                     continue
-                elif "premier" in text.lower(): # French specific
+                elif "premier" in text.lower():
                     current_art_num = "Article_1"
                     get_title_next = True
                     continue
@@ -84,9 +93,9 @@ for file_path in html_files:
                 get_title_next = False
                 continue
 
-        # 5. CONTENT CAPTURE
+        # 5. CAPTURE CONTENT
         if current_art_num:
-            # Special Granularity for Art 5 & 6
+            # Check for Paragraph numbering (specifically for Art 5/6)
             para_match = re.match(r'^(\d+)\.\s+(.*)', text)
             if current_art_num in ["Article_5", "Article_6"] and para_match:
                 row_id = f"{current_art_num}_{para_match.group(1)}"
@@ -104,10 +113,10 @@ for file_path in html_files:
 
     if data:
         df = pd.DataFrame(data)
-        # Final clean: Remove duplicates and merge text chunks
+        # Deduplicate and join fragments
         df = df.groupby(['ID', 'Type', 'Label'], sort=False).agg({
             'Title': 'first',
             'Text': lambda x: '<br><br>'.join(dict.fromkeys(x))
         }).reset_index()
         df.to_csv(f"{OUTPUT_FOLDER}/dma_{lang_code}.csv", index=False, encoding='utf-8')
-        print(f"   Success: {len(df)} rows saved.")
+        print(f"   Saved {len(df)} rows.")
