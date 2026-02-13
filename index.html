@@ -7,43 +7,32 @@
     <style>
         :root { --eu-blue: #0e477d; --sidebar-bg: #f3f6f7; --font-main: "Arial", sans-serif; }
         body { font-family: var(--font-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        
         #sidebar { width: 340px; background: var(--sidebar-bg); border-right: 1px solid #c5d1d8; display: flex; flex-direction: column; }
         .sidebar-header { padding: 20px; background: var(--eu-blue); color: white; }
         #article-list { flex: 1; overflow-y: auto; }
-        
-        /* Navigation Categories */
-        .chapter-separator { padding: 15px 20px; background: #d0d9e0; font-weight: bold; font-size: 0.8rem; color: #333; border-bottom: 1px solid #b8c5ce; }
+        .chapter-separator { padding: 15px 20px; background: #d0d9e0; font-weight: bold; font-size: 0.8rem; color: #333; border-bottom: 1px solid #b8c5ce; line-height: 1.3; }
         .section-header { padding: 10px 20px; background: #e1e8ed; font-weight: bold; font-size: 0.75rem; color: #555; text-transform: uppercase; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid #c5d1d8; }
-        
         .nav-item { padding: 12px 20px; border-bottom: 1px solid #dbe3e8; cursor: pointer; transition: 0.2s; background: #fff; }
         .nav-item:hover { background: #e9eff2; }
         .nav-item.active { background: #f0f7ff; border-left: 6px solid var(--eu-blue); padding-left: 14px; font-weight: bold; }
-        .nav-item small { display: block; color: #666; font-size: 0.78rem; font-weight: normal; margin-top: 4px; line-height: 1.2; }
-
-        /* Content Area */
+        .nav-item small { display: block; color: #666; font-size: 0.78rem; font-weight: normal; margin-top: 4px; }
         #main-view { flex: 1; display: flex; flex-direction: column; min-width: 0; }
         #content { flex: 1; padding: 40px 60px; overflow-y: auto; }
-        h2#art-label { color: var(--eu-blue); border-bottom: 2px solid #e1e8ed; padding-bottom: 15px; margin-top: 0; font-size: 1.6rem; }
+        h2#art-label { color: var(--eu-blue); border-bottom: 2px solid #e1e8ed; padding-bottom: 15px; margin-top: 0; font-size: 1.5rem; }
         .article-text { line-height: 1.75; font-size: 1.1rem; text-align: justify; color: #222; }
-
-        /* Panels */
         #recitals-panel { width: 380px; background: #f9f9f9; border-left: 1px solid #ddd; padding: 20px; overflow-y: auto; }
-        #recitals-panel h3 { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
-        details { background: white; border: 1px solid #ddd; margin-bottom: 8px; padding: 12px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        #recitals-panel h3 { font-size: 0.8rem; color: #888; text-transform: uppercase; margin-bottom: 20px; }
+        details { background: white; border: 1px solid #ddd; margin-bottom: 8px; padding: 12px; border-radius: 4px; }
         summary { cursor: pointer; font-weight: bold; color: var(--eu-blue); font-size: 0.85rem; }
-        
         #external-links-area { padding: 15px 60px; background: #f4f4f4; border-top: 1px solid #ddd; display: flex; gap: 15px; }
         .ext-link { color: var(--eu-blue); text-decoration: none; font-weight: bold; font-size: 0.8rem; border: 1px solid var(--eu-blue); padding: 6px 12px; border-radius: 4px; background: white; }
-        .ext-link:hover { background: var(--eu-blue); color: white; }
     </style>
 </head>
 <body>
-
     <div id="sidebar">
         <div class="sidebar-header">
             <h2 style="margin:0; font-size:1.2rem;">DMA Explorer</h2>
-            <select id="language-select" onchange="loadLanguageData()" style="width:100%; margin-top:10px; padding:6px; border-radius:4px; border:none;">
+            <select id="language-select" onchange="loadLanguageData()" style="width:100%; margin-top:10px; padding:6px;">
                 <option value="en">English (EN)</option>
                 <option value="fr">Français (FR)</option>
                 <option value="de">Deutsch (DE)</option>
@@ -51,15 +40,13 @@
         </div>
         <div id="article-list"></div>
     </div>
-
     <div id="main-view">
         <div id="content">
             <h2 id="art-label">Select a Provision</h2>
-            <div id="art-text" class="article-text">Please select a recital or article from the sidebar to begin.</div>
+            <div id="art-text" class="article-text">Select content from the sidebar.</div>
         </div>
         <div id="external-links-area"></div>
     </div>
-
     <div id="recitals-panel">
         <h3>Related References</h3>
         <div id="recitals-list"></div>
@@ -96,7 +83,6 @@
             const lang = document.getElementById('language-select').value;
             list.innerHTML = '';
 
-            // 1. RECITALS SECTION (Collapsible)
             const recHeader = document.createElement('div');
             recHeader.className = 'section-header';
             recHeader.innerHTML = `<span>Recitals</span> <span>${recitalsVisible ? '▼' : '▶'}</span>`;
@@ -104,15 +90,11 @@
             list.appendChild(recHeader);
 
             if (recitalsVisible) {
-                dmaData.filter(r => getVal(r, 'Type') === 'Recital').forEach(row => {
-                    list.appendChild(createNavItem(row, lang));
-                });
+                dmaData.filter(r => getVal(r, 'Type') === 'Recital').forEach(row => list.appendChild(createNavItem(row, lang)));
             }
 
-            // 2. CHAPTERS & PROVISIONS
             dmaData.filter(r => getVal(r, 'Type') !== 'Recital').forEach(row => {
-                const type = getVal(row, 'Type');
-                if (type === 'Chapter') {
+                if (getVal(row, 'Type') === 'Chapter') {
                     const ch = document.createElement('div');
                     ch.className = 'chapter-separator';
                     ch.innerText = getVal(row, 'Label');
@@ -127,7 +109,6 @@
             const id = getVal(row, 'ID');
             const map = masterLinks.find(m => getVal(m, 'ID') === id);
             const title = getVal(map, `Title_${lang.toUpperCase()}`) || getVal(map, 'Title') || getVal(row, 'Title');
-            
             const div = document.createElement('div');
             div.className = 'nav-item';
             div.id = `nav-${id}`;
@@ -148,32 +129,28 @@
             document.getElementById('art-label').innerText = `${getVal(row, 'Label')}: ${title}`;
             document.getElementById('art-text').innerHTML = getVal(row, 'Text');
 
-            // REVERSE LOOKUP Logic for Recital Sidebar
             const sideList = document.getElementById('recitals-list');
             sideList.innerHTML = '';
 
             if (getVal(row, 'Type') === 'Recital') {
-                // If viewing a Recital, find which Articles mention this Recital number
                 const recitalNum = id.replace('REC_', '');
-                const relatedArticles = masterLinks.filter(m => {
+                masterLinks.forEach(m => {
                     const recs = getVal(m, 'Related_Recitals').split(',').map(s => s.trim());
-                    return recs.includes(recitalNum);
-                });
-
-                relatedArticles.forEach(artMap => {
-                    const artId = getVal(artMap, 'ID');
-                    const artData = dmaData.find(x => getVal(x, 'ID') === artId);
-                    if (artData) {
-                        const d = document.createElement('details');
-                        d.innerHTML = `<summary>${getVal(artData, 'Label')}</summary><div style="font-size:0.85rem; padding:10px;">${getVal(artData, 'Text')}</div>`;
-                        sideList.appendChild(d);
+                    if (recs.includes(recitalNum)) {
+                        const artId = getVal(m, 'ID');
+                        const artData = dmaData.find(x => getVal(x, 'ID') === artId);
+                        if (artData) {
+                            const artTitle = getVal(m, `Title_${lang.toUpperCase()}`) || getVal(m, 'Title') || getVal(artData, 'Title');
+                            const d = document.createElement('details');
+                            d.innerHTML = `<summary>${getVal(artData, 'Label')}: ${artTitle}</summary><div style="font-size:0.85rem; padding:10px;">${getVal(artData, 'Text')}</div>`;
+                            sideList.appendChild(d);
+                        }
                     }
                 });
             } else {
-                // If viewing an Article, show its Related Recitals (Normal lookup)
                 const refs = getVal(map, 'Related_Recitals').split(',').map(s => s.trim());
                 refs.forEach(ref => {
-                    const isAnnex = ref.toUpperCase() === "ANNEX";
+                    const isAnnex = ref.toLowerCase() === "annex";
                     const searchId = isAnnex ? "ANNEX_MAIN" : `REC_${ref}`;
                     const refData = dmaData.find(x => getVal(x, 'ID') === searchId);
                     if (refData) {
@@ -184,7 +161,6 @@
                 });
             }
 
-            // Multiple Links Logic
             const linksArea = document.getElementById('external-links-area');
             linksArea.innerHTML = '';
             const urls = getVal(map, 'External_Links').split('|');
@@ -197,8 +173,8 @@
                     linksArea.appendChild(a);
                 }
             });
+            document.getElementById('content').scrollTop = 0;
         }
-
         init();
     </script>
 </body>
