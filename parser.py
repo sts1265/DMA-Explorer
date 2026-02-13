@@ -26,9 +26,12 @@ for file_path in html_files:
     passed_toc = False 
     get_title_next = False
 
-    # FIX: Using a more specific selector to avoid nested double-text
-    # We look for p tags that aren't inside other captured tags
+    # FIX: Only look for tags that are not nested inside each other to avoid double-text
     for el in soup.find_all(['p', 'tr']):
+        # If it's a p-tag inside a table, skip it (the 'tr' logic handles tables)
+        if el.name == 'p' and el.find_parent('table'):
+            continue
+            
         text = el.get_text(" ", strip=True).replace('\xa0', ' ').strip()
         if not text or len(text) < 2: continue
 
@@ -55,19 +58,17 @@ for file_path in html_files:
 
         # 4. ARTICLE HEADINGS & TITLES
         if not parsing_annex and passed_toc:
-            # Check if this line is "Article X"
             if (text.startswith("Article") or text.startswith("Artikel")) and len(text) < 30:
                 art_num_match = re.search(r'\d+', text)
                 if art_num_match:
                     current_art_num = f"Article_{art_num_match.group(0)}"
-                    get_title_next = True # The next line will be the title
+                    get_title_next = True 
                     continue
                 elif "premier" in text.lower():
                     current_art_num = "Article_1"
                     get_title_next = True
                     continue
             
-            # If the previous line was "Article X", this line is the Official Title
             if get_title_next:
                 current_art_title = text
                 get_title_next = False
@@ -75,7 +76,6 @@ for file_path in html_files:
 
         # 5. CONTENT CAPTURE
         if current_art_num:
-            # Handle mixed granularity for Art 5/6
             para_match = re.match(r'^(\d+)\.\s+(.*)', text)
             if current_art_num in ["Article_5", "Article_6"] and para_match:
                 para_id = f"{current_art_num}_{para_match.group(1)}"
@@ -87,14 +87,14 @@ for file_path in html_files:
             data.append({
                 'ID': para_id,
                 'Type': 'Annex' if parsing_annex else 'Article Paragraph',
-                'Label': label,
-                'Title': current_art_title, # Store the language-specific title
+                'Title': current_art_title,
                 'Text': text
             })
 
     if data:
         df = pd.DataFrame(data)
-        # FIX: The lambda now handles cases where Title might be different across rows
+        # Final safety deduplication
+        df['Text'] = df['Text'].str.strip()
         df = df.groupby(['ID', 'Type', 'Label'], sort=False).agg({
             'Title': 'first',
             'Text': lambda x: '<br><br>'.join(dict.fromkeys(x))
