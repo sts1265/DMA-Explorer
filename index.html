@@ -16,7 +16,7 @@
             width: 320px; min-width: 200px; max-width: 500px; background: var(--sidebar-bg); 
             border-right: 1px solid var(--border-color); display: flex; 
             flex-direction: column; height: 100vh; transition: transform 0.3s ease;
-            resize: horizontal; overflow: hidden; /* Fixed for manual resizing */
+            resize: horizontal; overflow: hidden; position: relative;
         }
 
         #main-view { 
@@ -28,7 +28,7 @@
             width: 350px; min-width: 200px; max-width: 600px; background: #f9f9f9; 
             border-left: 1px solid var(--border-color); display: flex; 
             flex-direction: column; height: 100vh; transition: transform 0.3s ease;
-            resize: horizontal; overflow: hidden; /* Fixed for manual resizing */
+            resize: horizontal; overflow: hidden;
         }
 
         /* Mobile Header */
@@ -45,7 +45,6 @@
         }
         #btn-rec { background: white; color: var(--eu-blue); font-weight: bold; }
         .mob-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
         .mob-btn-group { display: flex; gap: 8px; flex: 2; }
 
         /* Sidebar UI */
@@ -80,19 +79,19 @@
 
         /* MOBILE OVERRIDES */
         @media (max-width: 850px) {
-            #sidebar, #recitals-panel { resize: none; overflow: hidden; }
+            #sidebar, #recitals-panel { resize: none; overflow: hidden; width: 85% !important; }
             #mobile-nav-bar { display: flex; }
             #main-view { min-width: 100%; padding-top: 60px; }
             #content { padding: 20px; width: 100%; box-sizing: border-box; }
             
-            #sidebar { position: fixed; left: 0; top: 0; width: 85% !important; transform: translateX(-100%); z-index: 2500; height: 100vh; }
+            #sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); z-index: 2500; height: 100vh; }
             .sidebar-header { padding-top: 70px; } 
-            #language-select { font-size: 0.85rem; padding: 8px; } /* Reduced font size back */
+            #language-select { font-size: 0.85rem; padding: 8px; }
 
             #recitals-dropdown summary { list-style: none; }
             #recitals-dropdown summary::-webkit-details-marker { display: none; }
 
-            #recitals-panel { position: fixed; right: 0; top: 0; width: 85% !important; transform: translateX(100%); z-index: 2500; height: 100vh; }
+            #recitals-panel { position: fixed; right: 0; top: 0; transform: translateX(100%); z-index: 2500; height: 100vh; padding-top: 60px; /* To show the title header */}
             
             #external-links-area { 
                 position: fixed; right: 0; top: 0; width: 85% !important; height: 100vh; 
@@ -135,7 +134,7 @@
     <div id="main-view">
         <div id="content">
             <div id="definition-box"><h4 id="def-title" style="margin:0; color:var(--eu-blue);">Term</h4><div id="def-text">...</div></div>
-            <h2 id="art-label" style="color:var(--eu-blue); border-bottom: 2px solid #eee; padding-bottom: 12px; margin-top: 0;">Select a Provision</h2>
+            <h2 id="art-label" style="color:var(--eu-blue); border-bottom: 2px solid #eee; padding-bottom: 12px; margin-top: 0;">Loading...</h2>
             <div id="art-text" style="line-height: 1.6;"></div>
         </div>
         <div id="external-links-area">
@@ -182,6 +181,8 @@
             try {
                 await Promise.all([loadDefinitions(), loadMasterLinks()]);
                 await loadLanguageData();
+                // LANDING PAGE FIX: Load Article 1 automatically
+                displayContent('Article_1');
             } catch (e) { console.error("Init failed", e); }
         }
 
@@ -210,7 +211,7 @@
         }
 
         function renderSidebar() {
-            const list = document.getElementById('article-list'), lang = document.getElementById('language-select').value;
+            const list = document.getElementById('article-list');
             list.innerHTML = '';
             const recDetails = document.createElement('details');
             recDetails.id = "recitals-dropdown";
@@ -232,6 +233,7 @@
                     div.innerText = label;
                     list.appendChild(div);
                 } else {
+                    const lang = document.getElementById('language-select').value;
                     const map = masterLinks.find(m => getVal(m, 'ID') === id);
                     const div = document.createElement('div');
                     div.className = 'nav-item'; div.id = 'nav-' + id;
