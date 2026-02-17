@@ -13,9 +13,10 @@
         body { font-family: var(--font-main); display: flex; width: 100vw; }
         
         #sidebar { 
-            width: 320px; min-width: 280px; background: var(--sidebar-bg); 
+            width: 320px; min-width: 200px; max-width: 500px; background: var(--sidebar-bg); 
             border-right: 1px solid var(--border-color); display: flex; 
             flex-direction: column; height: 100vh; transition: transform 0.3s ease;
+            resize: horizontal; overflow: auto; /* Desktop Resizing */
         }
 
         #main-view { 
@@ -24,12 +25,13 @@
         }
 
         #recitals-panel { 
-            width: 350px; min-width: 300px; background: #f9f9f9; 
+            width: 350px; min-width: 200px; max-width: 600px; background: #f9f9f9; 
             border-left: 1px solid var(--border-color); display: flex; 
             flex-direction: column; height: 100vh; transition: transform 0.3s ease;
+            resize: horizontal; overflow: auto; /* Desktop Resizing */
         }
 
-        /* Mobile Header - Permanently Pinned */
+        /* Mobile Header */
         #mobile-nav-bar { 
             display: none; background: var(--eu-blue); color: white; 
             padding: 10px; justify-content: space-between; position: fixed; 
@@ -39,9 +41,9 @@
         .mob-btn { 
             background: rgba(255,255,255,0.15); border: 1px solid white; color: white; 
             padding: 8px 12px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;
-            transition: opacity 0.3s;
         }
-        .mob-btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: rgba(255,255,255,0.3); }
+        #btn-rec { background: white; color: var(--eu-blue); font-weight: bold; } /* More prominent */
+        .mob-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
         /* Sidebar UI */
         .sidebar-header { padding: 20px; background: var(--eu-blue); color: white; flex-shrink: 0; }
@@ -54,9 +56,13 @@
         /* Content UI */
         #content { flex: 1; padding: 40px; overflow-y: auto; position: relative; word-wrap: break-word; }
         .defined-term { border-bottom: 1.5px dashed var(--eu-blue); cursor: help; }
-        #definition-box { position: fixed; display: none; z-index: 9999; width: 300px; background: white; border: 2px solid var(--eu-blue); border-radius: 8px; padding: 18px; }
+        #definition-box { 
+            position: fixed; display: none; z-index: 9999; width: 280px; 
+            background: white; border: 2px solid var(--eu-blue); border-radius: 8px; 
+            padding: 15px; font-size: 0.85rem; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
 
-        /* External Links area */
+        /* External Links */
         #external-links-area { padding: 15px 40px; background: #f4f4f4; border-top: 1px solid #ddd; flex-shrink: 0; transition: transform 0.3s ease; }
         .ext-link { color: var(--eu-blue); text-decoration: none; font-weight: bold; font-size: 0.8rem; border: 1px solid var(--eu-blue); padding: 8px 12px; border-radius: 4px; background: white; display: inline-block; margin: 5px 10px 5px 0; }
 
@@ -68,16 +74,22 @@
         /* Backdrop */
         #backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; }
 
-        /* MOBILE UX OVERRIDES */
+        /* MOBILE OVERRIDES */
         @media (max-width: 850px) {
+            #sidebar, #recitals-panel { resize: none; overflow: hidden; } /* Disable manual resize on mobile */
             #mobile-nav-bar { display: flex; }
-            #main-view { min-width: 100%; padding-top: 60px; /* Space for sticky header */ }
-            #art-text { font-size: 0.95rem; text-align: left; }
+            #main-view { min-width: 100%; padding-top: 60px; }
+            #art-text { font-size: 1rem; }
             #content { padding: 20px; width: 100%; box-sizing: border-box; }
             
-            /* Panels restricted to 85% width so you can always see/tap the backdrop to close */
-            #sidebar { position: fixed; left: 0; top: 0; width: 85% !important; transform: translateX(-100%); z-index: 2500; }
-            #recitals-panel { position: fixed; right: 0; top: 0; width: 85% !important; transform: translateX(100%); z-index: 2500; }
+            #sidebar { position: fixed; left: 0; top: 0; width: 85% !important; transform: translateX(-100%); z-index: 2500; height: 100vh; }
+            .sidebar-header { padding-top: 70px; } /* Clear mobile buttons */
+            #language-select { font-size: 1rem; padding: 10px; } /* Larger language selector */
+
+            #recitals-dropdown summary { list-style: none; } /* Remove double arrow */
+            #recitals-dropdown summary::-webkit-details-marker { display: none; }
+
+            #recitals-panel { position: fixed; right: 0; top: 0; width: 85% !important; transform: translateX(100%); z-index: 2500; height: 100vh; }
             
             #external-links-area { 
                 position: fixed; right: 0; top: 0; width: 85% !important; height: 100vh; 
@@ -100,15 +112,15 @@
     <div id="mobile-nav-bar">
         <button class="mob-btn" onclick="togglePanel('sidebar')">☰ Articles</button>
         <div>
-            <button id="btn-links" class="mob-btn" onclick="togglePanel('links')" disabled>🔗 Links</button>
             <button id="btn-rec" class="mob-btn" onclick="togglePanel('recitals')" disabled>⚖ Ref</button>
+            <button id="btn-links" class="mob-btn" onclick="togglePanel('links')" disabled>🔗 Links</button>
         </div>
     </div>
 
     <div id="sidebar">
         <div class="sidebar-header">
             <h2 style="margin:0; font-size:1rem;">DMA Explorer</h2>
-            <select id="language-select" onchange="loadLanguageData()" style="width:100%; margin-top:10px; padding:5px;">
+            <select id="language-select" onchange="loadLanguageData()" style="width:100%; margin-top:10px;">
                 <option value="en">English (EN)</option>
                 <option value="fr">Français (FR)</option>
                 <option value="de">Deutsch (DE)</option>
@@ -124,7 +136,7 @@
             <div id="art-text" style="line-height: 1.6;"></div>
         </div>
         <div id="external-links-area">
-            <div style="font-weight:bold; margin-bottom:15px; font-size:0.9rem; color:#666; border-bottom:1px solid #eee; padding-bottom:10px;">PROVISION LINKS</div>
+            <div style="font-weight:bold; margin-bottom:15px; font-size:0.9rem; color:#666; border-bottom:1px solid #eee; padding-bottom:10px;">EXTERNAL LINKS</div>
             <div id="links-container"></div>
         </div>
     </div>
@@ -198,6 +210,7 @@
             const list = document.getElementById('article-list'), lang = document.getElementById('language-select').value;
             list.innerHTML = '';
             const recDetails = document.createElement('details');
+            recDetails.id = "recitals-dropdown";
             recDetails.innerHTML = `<summary style="padding:12px; background:#e1e8ed; font-weight:bold; font-size:0.75rem; cursor:pointer;">▶ RECITALS</summary><div id="rec-nav-list"></div>`;
             list.appendChild(recDetails);
             const recNavList = recDetails.querySelector('#rec-nav-list');
@@ -243,7 +256,6 @@
             }
             document.getElementById('art-text').innerHTML = textHtml;
 
-            // Related Recitals
             const sideList = document.getElementById('recitals-list'); sideList.innerHTML = '';
             const recBtn = document.getElementById('btn-rec');
             if (map && getVal(map, 'Related_Recitals')) {
@@ -259,7 +271,6 @@
                 });
             } else { recBtn.disabled = true; }
 
-            // External Links
             const linksArea = document.getElementById('external-links-area'), container = document.getElementById('links-container'), linkBtn = document.getElementById('btn-links');
             container.innerHTML = '';
             const linkData = getVal(map, 'External_Links');
