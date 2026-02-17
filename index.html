@@ -79,20 +79,24 @@
 
         /* MOBILE OVERRIDES */
         @media (max-width: 850px) {
-            html, body { overflow: auto; height: auto; } /* Fix: Allow scrolling for long articles */
-            #sidebar, #recitals-panel { resize: none; overflow: hidden; width: 85% !important; }
+            html, body { overflow: auto; height: auto; } 
+            #sidebar, #recitals-panel { resize: none; width: 85% !important; }
             #mobile-nav-bar { display: flex; }
             #main-view { min-width: 100%; padding-top: 60px; height: auto; min-height: 100vh; }
             #content { padding: 20px; width: 100%; box-sizing: border-box; overflow-y: visible; }
             
-            #sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); z-index: 2500; height: 100vh; }
+            #sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); z-index: 2500; height: 100vh; overflow-y: auto; }
             .sidebar-header { padding-top: 70px; } 
             #language-select { font-size: 0.85rem; padding: 8px; }
 
             #recitals-dropdown summary { list-style: none; }
             #recitals-dropdown summary::-webkit-details-marker { display: none; }
 
-            #recitals-panel { position: fixed; right: 0; top: 0; transform: translateX(100%); z-index: 2500; height: 100vh; padding-top: 60px; }
+            #recitals-panel { 
+                position: fixed; right: 0; top: 0; transform: translateX(100%); 
+                z-index: 2500; height: 100vh; padding-top: 60px; display: flex; flex-direction: column;
+            }
+            #recitals-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; } /* Fix: Ensured scrolling for long refs */
             
             #external-links-area { 
                 position: fixed; right: 0; top: 0; width: 85% !important; height: 100vh; 
@@ -105,7 +109,7 @@
             body.recitals-open #recitals-panel { transform: translateX(0); }
             body.links-open #external-links-area { transform: translateX(0); }
             body.any-panel-open #backdrop { display: block; }
-            body.any-panel-open { overflow: hidden; } /* Lock background scroll when menu is open */
+            body.any-panel-open { overflow: hidden; } 
         }
     </style>
 </head>
@@ -289,7 +293,6 @@
                 });
             } else { linkBtn.disabled = true; if(window.innerWidth > 850) linksArea.style.display = 'none'; }
             
-            // Auto-scroll to top of content on load
             if (window.innerWidth < 850) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
