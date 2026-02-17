@@ -13,32 +13,20 @@
         body { font-family: var(--font-main); display: flex; width: 100vw; }
         
         #sidebar { 
-            width: 320px; 
-            min-width: 280px; 
-            background: var(--sidebar-bg); 
-            border-right: 1px solid var(--border-color); 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh;
+            width: 320px; min-width: 280px; background: var(--sidebar-bg); 
+            border-right: 1px solid var(--border-color); display: flex; 
+            flex-direction: column; height: 100vh;
         }
 
         #main-view { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-            min-width: 400px;
-            background: white;
+            flex: 1; display: flex; flex-direction: column; 
+            height: 100vh; min-width: 400px; background: white;
         }
 
         #recitals-panel { 
-            width: 350px; 
-            min-width: 300px; 
-            background: #f9f9f9; 
-            border-left: 1px solid var(--border-color); 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh;
+            width: 350px; min-width: 300px; background: #f9f9f9; 
+            border-left: 1px solid var(--border-color); display: flex; 
+            flex-direction: column; height: 100vh;
         }
 
         /* Sidebar Navigation */
@@ -69,47 +57,37 @@
         /* External Links Styling */
         #external-links-area { padding: 15px 40px; background: #f4f4f4; border-top: 1px solid #ddd; flex-shrink: 0; }
         .ext-link { 
-            color: var(--eu-blue); 
-            text-decoration: none; 
-            font-weight: bold; 
-            font-size: 0.8rem; 
-            border: 1px solid var(--eu-blue); 
-            padding: 6px 12px; 
-            border-radius: 4px; 
-            background: white; 
-            display: inline-block; 
-            margin: 5px 10px 5px 0; 
+            color: var(--eu-blue); text-decoration: none; font-weight: bold; 
+            font-size: 0.8rem; border: 1px solid var(--eu-blue); padding: 6px 12px; 
+            border-radius: 4px; background: white; display: inline-block; margin: 5px 10px 5px 0; 
         }
         .ext-link:hover { background: var(--eu-blue); color: white; }
 
         /* Referenced Recitals BOX LOOK */
-        #recitals-list details { 
-            background: white; 
-            border: 1px solid #ddd; 
-            border-radius: 6px; 
-            margin-bottom: 12px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        #recitals-list summary { 
-            padding: 12px; 
-            font-weight: bold; 
-            color: var(--eu-blue); 
-            font-size: 0.85rem; 
-            cursor: pointer; 
-            background: #fdfdfd;
-        }
-        #recitals-list .ref-content { 
-            padding: 15px; 
-            font-size: 0.9rem; 
-            line-height: 1.6; 
-            color: #333;
-            border-top: 1px solid #eee;
-        }
+        #recitals-list details { background: white; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        #recitals-list summary { padding: 12px; font-weight: bold; color: var(--eu-blue); font-size: 0.85rem; cursor: pointer; background: #fdfdfd; }
+        #recitals-list .ref-content { padding: 15px; font-size: 0.9rem; line-height: 1.6; color: #333; border-top: 1px solid #eee; }
 
-        @media (max-width: 1100px) {
+        /* MOBILE OPTIMIZATION */
+        @media (max-width: 800px) {
             body { flex-direction: column; overflow-y: auto; height: auto; }
-            #sidebar, #main-view, #recitals-panel { width: 100% !important; height: auto; min-height: 300px; border: none; }
-            #sidebar { height: 450px; }
+            
+            #sidebar, #main-view, #recitals-panel { 
+                width: 100% !important; min-width: 100%; height: auto; border: none; 
+            }
+
+            #sidebar { max-height: 400px; border-bottom: 2px solid var(--eu-blue); }
+
+            #content { padding: 20px; }
+
+            /* External links stack vertically on mobile for easier tapping */
+            .ext-link { display: block; margin: 10px 0; text-align: center; }
+
+            /* Definition box becomes a centered modal on touch screens */
+            #definition-box { 
+                width: 90% !important; left: 5% !important; top: 20% !important; 
+                position: fixed; 
+            }
         }
     </style>
 </head>
@@ -129,10 +107,7 @@
 
     <div id="main-view">
         <div id="content">
-            <div id="definition-box">
-                <h4 id="def-title" style="margin:0; color:var(--eu-blue); border-bottom:1px solid #eee; padding-bottom:5px;">Term</h4>
-                <div id="def-text">...</div>
-            </div>
+            <div id="definition-box"><h4 id="def-title" style="margin:0; color:var(--eu-blue);">Term</h4><div id="def-text">...</div></div>
             <h2 id="art-label" style="color:var(--eu-blue); border-bottom: 2px solid #eee; padding-bottom: 12px; margin-top: 0;">Select a Provision</h2>
             <div id="art-text" style="line-height: 1.8; font-size: 1.1rem; text-align: justify;"></div>
         </div>
@@ -144,13 +119,12 @@
 
     <div id="recitals-panel">
         <div style="padding: 15px; background: #eee; font-weight: bold; font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">RELATED REFERENCES</div>
-        <div id="recitals-list" style="padding: 20px; overflow-y: auto; flex: 1;"></div>
+        <div id="recitals-list" style="padding: 20px;"></div>
     </div>
 
     <script>
-        let dmaData = [];
-        let masterLinks = [];
-        let definitionsMap = new Map();
+        // ... (All existing logic remains exactly as in your current working version)
+        let dmaData = [], masterLinks = [], definitionsMap = new Map();
 
         const getVal = (row, key) => {
             if (!row) return "";
@@ -169,7 +143,7 @@
             try {
                 await Promise.all([loadDefinitions(), loadMasterLinks()]);
                 await loadLanguageData();
-            } catch (e) { console.error("Initialization failed", e); }
+            } catch (e) { console.error("Init Error", e); }
         }
 
         async function loadDefinitions() {
@@ -197,19 +171,15 @@
         }
 
         function renderSidebar() {
-            const list = document.getElementById('article-list');
-            const lang = document.getElementById('language-select').value;
+            const list = document.getElementById('article-list'), lang = document.getElementById('language-select').value;
             list.innerHTML = '';
-            
             const recDetails = document.createElement('details');
             recDetails.id = "recitals-dropdown";
             recDetails.innerHTML = `<summary style="padding:12px;">▶ RECITALS</summary><div id="rec-nav-list"></div>`;
             list.appendChild(recDetails);
             const recNavList = recDetails.querySelector('#rec-nav-list');
-
             dmaData.forEach(row => {
                 const type = getVal(row, 'Type'), id = getVal(row, 'ID'), label = getVal(row, 'Label');
-
                 if (type === 'Recital') {
                     const div = document.createElement('div');
                     div.className = 'nav-item'; div.style.paddingLeft = "30px";
@@ -235,14 +205,10 @@
         function displayContent(id) {
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('nav-'+id)?.classList.add('active');
-
-            const lang = document.getElementById('language-select').value;
-            const row = dmaData.find(r => getVal(r, 'ID') === id);
-            const map = masterLinks.find(m => getVal(m, 'ID') === id);
+            const lang = document.getElementById('language-select').value, row = dmaData.find(r => getVal(r, 'ID') === id), map = masterLinks.find(m => getVal(m, 'ID') === id);
             if (!row) return;
 
             document.getElementById('art-label').innerText = `${getVal(row, 'Label')}: ${resolveTitle(row, map, lang, id)}`;
-            
             let textHtml = getVal(row, 'Text').replace(/\xa0/g, ' ');
             if (!id.startsWith('Article_2') && definitionsMap.size > 0) {
                 const sortedTerms = Array.from(definitionsMap.keys()).sort((a,b) => b.length - a.length);
@@ -253,14 +219,12 @@
             }
             document.getElementById('art-text').innerHTML = textHtml;
 
-            // Related Recitals (Box Layout)
             const sideList = document.getElementById('recitals-list'); sideList.innerHTML = '';
             if (map) {
                 const relStr = getVal(map, 'Related_Recitals');
                 if (relStr) {
                     relStr.split(',').forEach(ref => {
-                        const cleanRef = ref.trim();
-                        const searchId = cleanRef.toLowerCase() === 'annex' ? "ANNEX_MAIN" : `REC_${cleanRef}`;
+                        const cleanRef = ref.trim(), searchId = cleanRef.toLowerCase() === 'annex' ? "ANNEX_MAIN" : `REC_${cleanRef}`;
                         const refData = dmaData.find(x => getVal(x, 'ID') === searchId);
                         if (refData) {
                             const d = document.createElement('details');
@@ -271,28 +235,18 @@
                 }
             }
 
-            // External Links Logic Re-added
-            const linksArea = document.getElementById('external-links-area');
-            const container = document.getElementById('links-container');
+            const linksArea = document.getElementById('external-links-area'), container = document.getElementById('links-container');
             container.innerHTML = '';
             const linkData = getVal(map, 'External_Links');
-            
             if (linkData && linkData !== "") {
                 linksArea.style.display = 'block';
                 linkData.split('|').forEach(item => {
                     if (!item.trim()) return;
                     let [name, url] = item.split('>');
-                    const a = document.createElement('a'); 
-                    a.className = 'ext-link'; 
-                    a.href = (url || name).trim(); 
-                    a.target = "_blank"; 
-                    a.innerText = name.trim();
+                    const a = document.createElement('a'); a.className = 'ext-link'; a.href = (url || name).trim(); a.target = "_blank"; a.innerText = name.trim();
                     container.appendChild(a);
                 });
-            } else {
-                linksArea.style.display = 'none';
-            }
-
+            } else { linksArea.style.display = 'none'; }
             document.getElementById('content').scrollTop = 0;
         }
 
