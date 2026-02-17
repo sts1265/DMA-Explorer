@@ -56,7 +56,7 @@
         .chapter-header { padding: 10px 15px; font-size: 0.7rem; font-weight: bold; background: #e1e8ed; color: #555; text-transform: uppercase; }
 
         /* Content UI */
-        #content { flex: 1; padding: 40px; overflow-y: auto; position: relative; word-wrap: break-word; }
+        #content { flex: 1; padding: 40px; overflow-y: auto; position: relative; word-wrap: break-word; min-height: 0; }
         .defined-term { border-bottom: 1.5px dashed var(--eu-blue); cursor: help; }
         #definition-box { 
             position: fixed; display: none; z-index: 9999; width: 280px; 
@@ -79,10 +79,11 @@
 
         /* MOBILE OVERRIDES */
         @media (max-width: 850px) {
+            html, body { overflow: auto; height: auto; } /* Fix: Allow scrolling for long articles */
             #sidebar, #recitals-panel { resize: none; overflow: hidden; width: 85% !important; }
             #mobile-nav-bar { display: flex; }
-            #main-view { min-width: 100%; padding-top: 60px; }
-            #content { padding: 20px; width: 100%; box-sizing: border-box; }
+            #main-view { min-width: 100%; padding-top: 60px; height: auto; min-height: 100vh; }
+            #content { padding: 20px; width: 100%; box-sizing: border-box; overflow-y: visible; }
             
             #sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); z-index: 2500; height: 100vh; }
             .sidebar-header { padding-top: 70px; } 
@@ -91,7 +92,7 @@
             #recitals-dropdown summary { list-style: none; }
             #recitals-dropdown summary::-webkit-details-marker { display: none; }
 
-            #recitals-panel { position: fixed; right: 0; top: 0; transform: translateX(100%); z-index: 2500; height: 100vh; padding-top: 60px; /* To show the title header */}
+            #recitals-panel { position: fixed; right: 0; top: 0; transform: translateX(100%); z-index: 2500; height: 100vh; padding-top: 60px; }
             
             #external-links-area { 
                 position: fixed; right: 0; top: 0; width: 85% !important; height: 100vh; 
@@ -104,6 +105,7 @@
             body.recitals-open #recitals-panel { transform: translateX(0); }
             body.links-open #external-links-area { transform: translateX(0); }
             body.any-panel-open #backdrop { display: block; }
+            body.any-panel-open { overflow: hidden; } /* Lock background scroll when menu is open */
         }
     </style>
 </head>
@@ -181,7 +183,6 @@
             try {
                 await Promise.all([loadDefinitions(), loadMasterLinks()]);
                 await loadLanguageData();
-                // LANDING PAGE FIX: Load Article 1 automatically
                 displayContent('Article_1');
             } catch (e) { console.error("Init failed", e); }
         }
@@ -288,7 +289,12 @@
                 });
             } else { linkBtn.disabled = true; if(window.innerWidth > 850) linksArea.style.display = 'none'; }
             
-            document.getElementById('content').scrollTop = 0;
+            // Auto-scroll to top of content on load
+            if (window.innerWidth < 850) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                document.getElementById('content').scrollTop = 0;
+            }
         }
 
         function showDef(event, termKey) {
