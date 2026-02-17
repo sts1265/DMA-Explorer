@@ -15,7 +15,7 @@
         #sidebar { 
             width: 320px; min-width: 280px; background: var(--sidebar-bg); 
             border-right: 1px solid var(--border-color); display: flex; 
-            flex-direction: column; height: 100vh;
+            flex-direction: column; height: 100vh; transition: transform 0.3s ease;
         }
 
         #main-view { 
@@ -26,78 +26,76 @@
         #recitals-panel { 
             width: 350px; min-width: 300px; background: #f9f9f9; 
             border-left: 1px solid var(--border-color); display: flex; 
-            flex-direction: column; height: 100vh;
+            flex-direction: column; height: 100vh; transition: transform 0.3s ease;
         }
+
+        /* Mobile Header (Hidden on Desktop) */
+        #mobile-nav-bar { display: none; background: var(--eu-blue); color: white; padding: 10px; justify-content: space-between; position: sticky; top: 0; z-index: 2000; }
+        .mob-btn { background: rgba(255,255,255,0.1); border: 1px solid white; color: white; padding: 6px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
 
         /* Sidebar UI */
         .sidebar-header { padding: 20px; background: var(--eu-blue); color: white; flex-shrink: 0; }
         #article-list { flex: 1; overflow-y: auto; border-top: 1px solid rgba(0,0,0,0.1); }
-        
         .nav-item { padding: 12px 18px; border-bottom: 1px solid #dbe3e8; cursor: pointer; background: #fff; line-height: 1.4; }
         .nav-item:hover { background: #f8f9fa; }
         .nav-item.active { border-left: 6px solid var(--eu-blue); background: #f0f7ff; font-weight: bold; }
         .nav-item small { display: block; color: #666; font-size: 0.78rem; font-weight: normal; margin-top: 4px; }
-        
         .chapter-header { padding: 10px 15px; font-size: 0.7rem; font-weight: bold; background: #e1e8ed; color: #555; text-transform: uppercase; }
-
-        #recitals-dropdown summary { padding: 12px 18px; font-size: 0.75rem; font-weight: bold; cursor: pointer; background: #e1e8ed; list-style: none; }
 
         /* Content UI */
         #content { flex: 1; padding: 40px; overflow-y: auto; position: relative; }
         .defined-term { border-bottom: 1.5px dashed var(--eu-blue); cursor: help; }
-        
-        #definition-box { 
-            position: fixed; display: none; z-index: 9999; width: 320px; 
-            background: white; border: 2px solid var(--eu-blue); border-radius: 8px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3); padding: 18px; line-height: 1.5;
-        }
+        #definition-box { position: fixed; display: none; z-index: 9999; width: 320px; background: white; border: 2px solid var(--eu-blue); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); padding: 18px; line-height: 1.5; }
 
         /* External Links */
-        #external-links-area { padding: 15px 40px; background: #f4f4f4; border-top: 1px solid #ddd; flex-shrink: 0; }
-        .ext-link { 
-            color: var(--eu-blue); text-decoration: none; font-weight: bold; font-size: 0.8rem; 
-            border: 1px solid var(--eu-blue); padding: 6px 12px; border-radius: 4px; 
-            background: white; display: inline-block; margin: 5px 10px 5px 0; 
-        }
+        #external-links-area { padding: 15px 40px; background: #f4f4f4; border-top: 1px solid #ddd; flex-shrink: 0; transition: transform 0.3s ease; }
+        .ext-link { color: var(--eu-blue); text-decoration: none; font-weight: bold; font-size: 0.8rem; border: 1px solid var(--eu-blue); padding: 6px 12px; border-radius: 4px; background: white; display: inline-block; margin: 5px 10px 5px 0; }
 
-        /* Recitals Box Look */
+        /* Recitals UI */
         #recitals-list details { background: white; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 12px; }
         #recitals-list summary { padding: 12px; font-weight: bold; color: var(--eu-blue); cursor: pointer; }
         #recitals-list .ref-content { padding: 15px; font-size: 0.9rem; border-top: 1px solid #eee; }
 
-        /* MOBILE FIXES */
-        @media (max-width: 800px) {
-            html, body { overflow: auto; height: auto; } /* Allow the whole page to scroll */
-            body { flex-direction: column; }
+        /* Backdrop */
+        #backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1500; }
+
+        /* MOBILE OVERRIDES */
+        @media (max-width: 850px) {
+            #mobile-nav-bar { display: flex; }
+            #main-view { min-width: 100%; }
+            #art-text { font-size: 0.95rem; } /* Smaller font for mobile */
+            #content { padding: 20px; }
             
-            #sidebar { 
-                width: 100% !important; min-width: 100%; height: 250px; /* Smaller, scrollable nav area */
-                border-right: none; border-bottom: 3px solid var(--eu-blue);
-                flex-shrink: 0;
-            }
-
-            #main-view { 
-                width: 100% !important; min-width: 100%; height: auto; /* Let it expand naturally */
-                overflow: visible; 
-            }
-
-            #content { padding: 20px; overflow: visible; } /* Turn off internal scroll so page scroll works */
-
-            #recitals-panel { 
-                width: 100% !important; min-width: 100%; height: auto; 
-                border-left: none; border-top: 1px solid #ccc;
-                overflow: visible;
-            }
-
-            #recitals-list { overflow: visible; }
-
-            .ext-link { display: block; text-align: center; margin: 10px 0; padding: 10px; }
+            #sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); z-index: 2100; box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
+            #recitals-panel { position: fixed; right: 0; top: 0; transform: translateX(100%); z-index: 2100; box-shadow: -5px 0 15px rgba(0,0,0,0.2); }
             
-            #definition-box { width: 90% !important; left: 5% !important; top: 30% !important; position: fixed; }
+            /* External Links as a slide-in overlay from right */
+            #external-links-area { 
+                position: fixed; right: 0; top: 0; width: 280px; height: 100vh; 
+                transform: translateX(100%); z-index: 2100; background: #fff; padding: 60px 20px 20px 20px;
+                box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+            }
+            .ext-link { display: block; margin-bottom: 10px; text-align: center; }
+
+            /* State classes */
+            body.sidebar-open #sidebar { transform: translateX(0); }
+            body.recitals-open #recitals-panel { transform: translateX(0); }
+            body.links-open #external-links-area { transform: translateX(0); }
+            body.any-panel-open #backdrop { display: block; }
         }
     </style>
 </head>
-<body>
+<body id="body-tag">
+
+    <div id="backdrop" onclick="closeAllPanels()"></div>
+
+    <div id="mobile-nav-bar">
+        <button class="mob-btn" onclick="togglePanel('sidebar')">☰ Articles</button>
+        <div>
+            <button class="mob-btn" onclick="togglePanel('links')">🔗 Links</button>
+            <button class="mob-btn" onclick="togglePanel('recitals')">⚖ Ref</button>
+        </div>
+    </div>
 
     <div id="sidebar">
         <div class="sidebar-header">
@@ -115,19 +113,35 @@
         <div id="content">
             <div id="definition-box"><h4 id="def-title" style="margin:0; color:var(--eu-blue);">Term</h4><div id="def-text">...</div></div>
             <h2 id="art-label" style="color:var(--eu-blue); border-bottom: 2px solid #eee; padding-bottom: 12px; margin-top: 0;">Select a Provision</h2>
-            <div id="art-text" style="line-height: 1.8; font-size: 1.1rem;"></div>
+            <div id="art-text" style="line-height: 1.6;"></div>
         </div>
         <div id="external-links-area">
+            <div style="font-weight:bold; margin-bottom:15px; font-size:0.9rem; color:#666;">EXTERNAL LINKS</div>
             <div id="links-container"></div>
         </div>
     </div>
 
     <div id="recitals-panel">
-        <div style="padding: 15px; background: #eee; font-weight: bold; font-size: 0.75rem; border-bottom: 1px solid var(--border-color);">RELATED REFERENCES</div>
-        <div id="recitals-list" style="padding: 20px;"></div>
+        <div style="padding: 15px; background: var(--eu-blue); color:white; font-weight: bold; font-size: 0.75rem;">RELATED REFERENCES</div>
+        <div id="recitals-list" style="padding: 20px; overflow-y: auto;"></div>
     </div>
 
     <script>
+        // Mobile Panel Controls
+        function togglePanel(panel) {
+            const b = document.getElementById('body-tag');
+            const isOpen = b.classList.contains(panel + '-open');
+            closeAllPanels();
+            if (!isOpen) {
+                b.classList.add(panel + '-open');
+                b.classList.add('any-panel-open');
+            }
+        }
+        function closeAllPanels() {
+            const b = document.getElementById('body-tag');
+            b.classList.remove('sidebar-open', 'recitals-open', 'links-open', 'any-panel-open');
+        }
+
         let dmaData = [], masterLinks = [], definitionsMap = new Map();
 
         const getVal = (row, key) => {
@@ -187,7 +201,7 @@
                     const div = document.createElement('div');
                     div.className = 'nav-item'; div.style.paddingLeft = "30px";
                     div.innerHTML = `<strong>${label}</strong>`;
-                    div.onclick = () => { displayContent(id); if(window.innerWidth < 800) document.getElementById('main-view').scrollIntoView(); };
+                    div.onclick = () => { displayContent(id); closeAllPanels(); };
                     recNavList.appendChild(div);
                 } else if (type === 'Chapter') {
                     const div = document.createElement('div');
@@ -199,7 +213,7 @@
                     const div = document.createElement('div');
                     div.className = 'nav-item'; div.id = 'nav-' + id;
                     div.innerHTML = `<strong>${label}</strong><small>${resolveTitle(row, map, lang, id)}</small>`;
-                    div.onclick = () => { displayContent(id); if(window.innerWidth < 800) document.getElementById('main-view').scrollIntoView(); };
+                    div.onclick = () => { displayContent(id); closeAllPanels(); };
                     list.appendChild(div);
                 }
             });
@@ -240,13 +254,12 @@
                 container.innerHTML = '';
                 const linkData = getVal(map, 'External_Links');
                 if (linkData) {
-                    linksArea.style.display = 'block';
                     linkData.split('|').forEach(item => {
                         let [name, url] = item.split('>');
                         const a = document.createElement('a'); a.className = 'ext-link'; a.href = (url || name).trim(); a.target = "_blank"; a.innerText = name.trim();
                         container.appendChild(a);
                     });
-                } else { linksArea.style.display = 'none'; }
+                } else { if(window.innerWidth > 850) linksArea.style.display = 'none'; }
             }
             document.getElementById('content').scrollTop = 0;
         }
@@ -257,8 +270,8 @@
             document.getElementById('def-title').innerText = termKey.toUpperCase();
             document.getElementById('def-text').innerText = definitionsMap.get(termKey.toLowerCase());
             box.style.display = 'block';
-            box.style.left = (window.innerWidth < 800) ? '5%' : event.clientX + 'px';
-            box.style.top = (window.innerWidth < 800) ? '20%' : (event.clientY - 20) + 'px';
+            box.style.left = (window.innerWidth < 850) ? '5%' : event.clientX + 'px';
+            box.style.top = (window.innerWidth < 850) ? '20%' : (event.clientY - 20) + 'px';
         }
 
         window.onclick = () => document.getElementById('definition-box').style.display = 'none';
